@@ -35,10 +35,11 @@ validated end-to-end. It does not mean a paid service is operational.
 ## Reference and scope notes
 
 - At audit start the working copy was not a Git checkout and lacked the old prototype. The GitHub
-  target was reachable and its `main` tip was
+  target's `main` base was
   [`0ae297cc3ae7dc3b828cbcc27e4a94a1ed367108`](https://github.com/n0tify/mindsy-mental-health-check-in-agent/commit/0ae297cc3ae7dc3b828cbcc27e4a94a1ed367108).
   The root `app.py`, `utils.py`, and `requirements.txt` there represent the earlier Streamlit
-  prototype and are retained in the release tree.
+  prototype and are retained in the release tree. The verified release commit is
+  [`98d38b0a9ee500351c36a6ac9e18780ff08ce67d`](https://github.com/n0tify/mindsy-mental-health-check-in-agent/commit/98d38b0a9ee500351c36a6ac9e18780ff08ce67d).
 - Original prototype source: [`app.py`](https://github.com/n0tify/mindsy-mental-health-check-in-agent/blob/main/app.py),
   [`utils.py`](https://github.com/n0tify/mindsy-mental-health-check-in-agent/blob/main/utils.py),
   and [`requirements.txt`](https://github.com/n0tify/mindsy-mental-health-check-in-agent/blob/main/requirements.txt).

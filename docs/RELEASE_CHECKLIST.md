@@ -1,8 +1,7 @@
 # Mindsy release checklist
 
 **Run date:** 2026-11-03
-**Result:** local checks are substantially verified; GitHub release and external deployment are
-not complete.
+**Result:** the source release commit is on GitHub `main`; external deployment is not complete.
 
 ## Workspace and preservation
 
