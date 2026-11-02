@@ -5,7 +5,7 @@ deployment manifests, and no external deployment or live Azure request has been 
 
 ## Local development
 
-Use Python 3.11 or newer and Node.js 20 or newer.
+Use Python 3.11 or newer and Node.js 20.19 or newer.
 
 ### Windows PowerShell
 
@@ -97,10 +97,11 @@ JWT_SECRET=<unique random secret of at least 32 characters>
 CORS_ORIGINS=https://<your-frontend-host>
 ```
 
-The production backend rejects the development JWT secret, example placeholder, or a secret
-shorter than 32 characters. Keep credentials in the hosting provider's secret manager. Restrict
-CORS to exact frontend origins. The frontend's `NEXT_PUBLIC_API_URL` is public and must never
-contain a credential. `API_PROXY_TARGET` is server-side configuration.
+An unset `APP_ENV` defaults to `production`; all environments except explicit local
+`APP_ENV=development` reject the development JWT secret, example placeholder, or a secret shorter
+than 32 characters. Keep credentials in the hosting provider's secret manager. Restrict CORS to
+exact frontend origins. The frontend's `NEXT_PUBLIC_API_URL` is public and must never contain a
+credential. `API_PROXY_TARGET` is server-side configuration.
 
 The backend creates tables at startup and applies an idempotent, additive migration for four
 nullable VADER score columns on existing `mood_entries` tables. This targeted migration preserves
@@ -118,11 +119,10 @@ the migration against a staging database before deployment.
   in CORS, or leave `NEXT_PUBLIC_API_URL` empty and point `API_PROXY_TARGET` at the API from the
   Next.js server.
 
-Deploy the Next.js frontend and FastAPI backend described above. The root-level Streamlit
-`app.py`/`utils.py` files are retained prototype material and are not the supported production
-entrypoint. That prototype has a separate legacy Azure path that can send journal text externally
-without the current backend's disclosure/opt-in safeguards and can surface provider errors. Do not
-deploy it for real user data until that separate path receives a security and privacy update.
+Deploy the Next.js frontend and FastAPI backend described above. The archived Streamlit prototype
+in `archive/streamlit-prototype/` is not a supported production entrypoint. It has a separate
+legacy Azure path that can send journal text externally without the current backend's
+disclosure/opt-in safeguards and can surface provider errors. Do not deploy it for real user data.
 
 No Vercel, Render, Railway, or other provider configuration is committed here. Verify each
 provider's current Next.js/Python runtime behavior before deployment.
@@ -164,7 +164,6 @@ After deployment, verify:
 The automated integration does not make Mindsy a clinical product or prove regulatory compliance.
 Before real users, review account deletion, email verification/password recovery, rate limiting,
 security headers, audit/operational monitoring, database migrations, data-retention policies, and
-crisis resources. The dependency audit also found unresolved Starlette/pytest and Next.js/PostCSS
-advisories; see [TECH_STACK_AUDIT.md](TECH_STACK_AUDIT.md) and resolve or formally accept them
-before production. The current localStorage token approach is convenient for a demo but is not an
-httpOnly-cookie design.
+crisis resources. See [TECH_STACK_AUDIT.md](TECH_STACK_AUDIT.md) for the latest dependency audit.
+The current localStorage token approach is convenient for a demo but is not an httpOnly-cookie
+design.

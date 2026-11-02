@@ -2,8 +2,8 @@
 
 ## Scope and evidence
 
-This audit distinguishes the maintained Next.js/FastAPI application from the retained root-level
-Streamlit prototype. Integration code, deployment configuration, and successful live service use
+This audit distinguishes the maintained Next.js/FastAPI application from the archived Streamlit
+prototype. Integration code, deployment configuration, and successful live service use
 are separate claims.
 
 | Status | Meaning |
@@ -46,7 +46,7 @@ recorded.
 | Browser `localStorage` | Guest data and session token storage in the frontend provider. | **IMPLEMENTED**; data is browser-local and JavaScript-accessible. |
 
 Resolved frontend package versions can differ within the ranges in `frontend/package.json`. The
-backend requirements pin FastAPI 0.115.6, Uvicorn 0.34.0, SQLAlchemy 2.0.36, Pydantic 2.10.4,
+backend requirements pin FastAPI 0.162.0, Uvicorn 0.34.0, SQLAlchemy 2.0.36, Pydantic 2.10.4,
 PyJWT 2.15.0, bcrypt 4.2.1, python-dotenv 1.2.2, OpenAI 1.59.7, and vaderSentiment 3.3.2.
 
 ## Companion behavior and privacy
@@ -75,15 +75,15 @@ discloses external processing and offers a consent choice.
 
 ## Legacy Streamlit prototype
 
-Root `app.py`, `utils.py`, and `requirements.txt` are historical prototype files, not part of the
-maintained app:
+`archive/streamlit-prototype/app.py`, `utils.py`, and `requirements.txt` are historical prototype
+files, not part of the maintained app:
 
 - `utils.py` contains VADER sentiment and Azure client calls, but its output is not wired into the
   current Next.js/FastAPI Companion.
 - The legacy Azure code uses `AZURE_ENDPOINT`, `AZURE_DEPLOYMENT`, and
   `AZURE_OPENAI_API_KEY`; the maintained integration uses the documented `AZURE_OPENAI_*` names.
 - The prototype's `show_mood_trend()` references `st.pyplot` although `st` is not imported in
-  `utils.py`. The prototype also imports `pyttsx3`, which is absent from root
+  `utils.py`. The prototype also imports `pyttsx3`, which is absent from its archived
   `requirements.txt`.
 - Root-level prototype code has not been used to verify the current API integration.
 
@@ -91,24 +91,29 @@ Do not describe prototype-only Azure/VADER calls as verified in the redesigned a
 
 ## Dependency audit and release blockers
 
-The dependency audit found known advisories in the existing frontend and backend dependency trees.
-PyJWT and python-dotenv pins were moved to available patched, non-major releases. Remaining backend
-advisories: `pip-audit -r backend/requirements.txt` reports 16 findings across Starlette 0.41.3
-(constrained by the pinned FastAPI version) and pytest 8.3.4 (the reported fix requires pytest 9).
-The full frontend `npm audit` reports 20 findings (19 moderate, 1 high); the production dependency
-tree reports 2 (one moderate, one high) involving Next.js 15.5.28 and its nested PostCSS 8.4.31.
-npm's reported Next.js fix is 16.4.4, a major upgrade. These versions were not automatically
-changed because they carry compatibility risk and the frontend is frozen. Treat outstanding
-dependency advisories as deployment blockers until compatible upgrades or mitigations are reviewed
-and validated.
+The maintained backend requirement set now passes `pip-audit -r backend/requirements.txt`; the
+FastAPI and pytest pins were updated after all 81 backend tests passed in an isolated clean
+environment. The declared requirements audit reports no known advisories. A full audit of the
+existing local virtual environment still reports 39 entries across its stale Starlette 0.41.3,
+pytest 8.3.4, pip 22.3, and setuptools 65.5.0 installations (including duplicate advisory aliases).
+The active local API was not restarted or modified; it continues to use its pre-update process and
+installed packages until an operator schedules a restart/reinstall.
+
+The frontend production tree now passes `npm audit --omit=dev` with zero findings. A targeted
+PostCSS 8.5.32 update and lockfile override fix the vulnerable nested Next.js dependency without
+upgrading Next.js or changing frontend source. A full `npm audit` still reports 18 moderate
+development/build-tool findings in the ESLint 8 toolchain. They are not in the production
+dependency tree, but are still part of the build supply chain and should be reviewed before
+changing the lint stack. `npm audit fix --force` was not applied because it proposes major-version
+changes.
 
 The root Streamlit prototype is independently excluded as a production entrypoint; its Azure
 privacy path is not the supported API integration.
 
 ## Deployment and test status
 
-- No deployment manifest for Vercel, Netlify, Render, Railway, or Docker was found in the tracked
-  application configuration. No hosted deployment was performed.
+- A GitHub Actions workflow now runs backend tests, dependency consistency and Python audit checks,
+  plus frontend production audit, lint, typecheck, and build. No hosted deployment was performed.
 - `GET /api/health` is a liveness response; it does not verify Azure or database connectivity.
 - Azure integration tests mock `AsyncAzureOpenAI`; no paid or live calls run in automated tests.
 - Production PostgreSQL, actual Azure credentials, live Azure inference, and host-level deployment

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Archived the unsupported Streamlit prototype separately from the maintained app and clarified
+  setup, architecture, safety, privacy, and database operations.
+- Changed an unset API `APP_ENV` to fail closed as production and require a unique JWT secret
+  outside explicit local development.
+- Updated FastAPI/Starlette and pytest pins after isolated regression tests; added CI checks and a
+  targeted patched PostCSS lockfile override.
+
 ## 1.0.0 — initial complete build
 
 Built as one coherent system rather than a patched-up prototype. Every phase was verified before

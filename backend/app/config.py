@@ -39,7 +39,7 @@ def _bool_env(name: str, default: bool = False) -> bool:
 class Settings:
     app_name: str = "Mindsy API"
     app_env: str = field(
-        default_factory=lambda: os.getenv("APP_ENV", "development").strip().lower()
+        default_factory=lambda: os.getenv("APP_ENV", "production").strip().lower()
     )
     database_url: str = field(
         default_factory=lambda: os.getenv("DATABASE_URL", DEFAULT_DATABASE_URL)
@@ -90,13 +90,13 @@ class Settings:
         )
 
     def validate(self) -> None:
-        if self.app_env == "production" and (
+        if self.app_env != "development" and (
             self.uses_default_secret
             or len(self.jwt_secret) < 32
             or self.jwt_secret.lower().startswith("replace-with-")
         ):
             raise RuntimeError(
-                "Production requires a JWT_SECRET of at least 32 characters."
+                "Non-development environments require a unique JWT_SECRET of at least 32 characters."
             )
 
 

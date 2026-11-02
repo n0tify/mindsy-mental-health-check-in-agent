@@ -2,9 +2,9 @@
 
 ## Application boundary
 
-The maintained application has a Next.js/React browser client and a FastAPI service. The root
-Streamlit prototype (`app.py`, `utils.py`, and root `requirements.txt`) is retained separately and
-is not imported by the maintained app.
+The maintained application has a Next.js/React browser client and a FastAPI service. The historical
+Streamlit prototype is retained under `archive/streamlit-prototype/` and is not imported by or
+installed with the maintained app.
 
 ```mermaid
 flowchart LR

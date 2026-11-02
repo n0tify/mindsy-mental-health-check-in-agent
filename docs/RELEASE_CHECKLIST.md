@@ -45,6 +45,25 @@
 No live Azure inference, production PostgreSQL integration, or external deployment was performed.
 Automated tests do not require Azure credentials and make no paid requests.
 
+## Repository cleanup and security follow-up
+
+| Check | Result |
+| --- | --- |
+| Backend regression tests | **81 passed** in the existing environment. A clean isolated environment using the updated FastAPI 0.162.0 and pytest 9.0.3 pins also passed **81 tests** (one Starlette `TestClient` deprecation warning). |
+| Backend dependency consistency | `pip check` reports no broken requirements in the existing environment. |
+| Declared backend dependency audit | `pip-audit -r backend/requirements.txt` reports **0 known vulnerabilities** after the FastAPI/pytest update. |
+| Existing local environment audit | A full audit reports 39 entries across stale Starlette 0.41.3, pytest 8.3.4, pip 22.3, and setuptools 65.5.0. The API was not restarted or its active environment replaced; this is not evidence that the currently running process has received the fixes. |
+| Frontend production dependency audit | `npm audit --omit=dev` reports **0 vulnerabilities** after pinning/overriding PostCSS to 8.5.32. |
+| Full frontend dependency audit | **18 moderate development/build-tool findings** remain in the ESLint 8 toolchain; no high or critical findings remain. No force/major upgrade was applied. |
+| Frontend lint | Passed in a temporary isolated copy; no lint warnings/errors. Existing `next lint` deprecation notice remains. |
+| Frontend TypeScript check | Passed in the temporary isolated copy. |
+| Frontend production build | Passed with all 16 static pages generated in the temporary isolated copy; the copy was removed. npm reported an engine warning because the machine has Node 20.11.1 while a lint dependency requests Node 20.19 or newer. CI requests the current Node 20 release. |
+| Local servers | Existing API health and frontend requests returned HTTP 200. Neither process was restarted. |
+| Credential scan | No tracked `.env`/private-key files or recognizable Azure/OpenAI key patterns were found. Environment examples contain placeholders only. |
+| Frontend preservation | No frontend source, UI, styling, or configuration behavior files changed. Only `frontend/package.json` and `frontend/package-lock.json` changed for the PostCSS security fix. |
+| CI workflow | `.github/workflows/ci.yml` was added. It has not run on GitHub because no commit/push was requested. |
+| Git hygiene | No cleanup commit or push was made. Empty tracked files were removed; prototype files were moved byte-for-byte to the archive. |
+
 ## Deployment requirements not yet verified
 
 - [ ] Provision and validate an Azure OpenAI resource and a chat-completions-capable model
@@ -62,9 +81,12 @@ Automated tests do not require Azure credentials and make no paid requests.
 - [ ] Deploy the frontend and backend to chosen providers and verify the hosted URL, API routing,
   authentication, data isolation, crisis response, and mobile behavior.
 - [ ] Run a controlled live Azure smoke test only after explicit configuration and approval.
-- [ ] Resolve or formally accept the remaining dependency advisories before production: Starlette
-  and pytest backend findings; Next.js/PostCSS frontend findings. The compatible remediation path
-  needs framework/development-tool upgrades and has not been validated.
+- [ ] Restart/rebuild the local API at an approved time to load the updated backend dependency
+  pins and fail-closed JWT configuration; the currently running process was deliberately left
+  untouched.
+- [ ] Review the remaining moderate frontend development/build-tool advisories before changing the
+  ESLint stack. The production frontend dependency audit is clear; the full dev-tree audit is not.
+- [ ] Run the new GitHub Actions workflow after the changes are reviewed and pushed.
 
 ## Known limitations
 

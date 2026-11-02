@@ -40,6 +40,24 @@ def test_production_accepts_long_configured_jwt_secret() -> None:
     settings.validate()
 
 
+def test_missing_app_env_fails_closed_for_default_secret(monkeypatch) -> None:
+    monkeypatch.delenv("APP_ENV", raising=False)
+    monkeypatch.delenv("JWT_SECRET", raising=False)
+
+    settings = Settings()
+
+    assert settings.app_env == "production"
+    with pytest.raises(RuntimeError, match="JWT_SECRET"):
+        settings.validate()
+
+
+def test_non_development_environment_rejects_default_secret() -> None:
+    settings = Settings(app_env="staging", jwt_secret=DEFAULT_JWT_SECRET)
+
+    with pytest.raises(RuntimeError, match="JWT_SECRET"):
+        settings.validate()
+
+
 def test_development_keeps_the_documented_default_secret() -> None:
     settings = Settings(app_env="development", jwt_secret=DEFAULT_JWT_SECRET)
 

@@ -6,6 +6,18 @@ while Insights, the Journal, Mood Weather, and small self-care tools offer ways 
 > Mindsy is a wellness journal, not a medical service. It does not diagnose, treat, or replace
 > professional care. If you are in immediate danger, contact your local emergency number.
 
+## Problem and intended use
+
+It can be difficult to notice emotional patterns or make time for reflection. Mindsy offers a
+place to name feelings, keep a journal, and explore small self-care activities.
+It is a wellness tool, not a clinical intervention; no health outcomes or treatment benefits are
+claimed.
+
+## Screenshots
+
+No product screenshots are currently committed. This avoids presenting prototype or personal
+reflection data as product examples; use synthetic data for any future screenshots.
+
 ## What is included
 
 | Feature | Description |
@@ -22,6 +34,14 @@ while Insights, the Journal, Mood Weather, and small self-care tools offer ways 
 | Support | Grounding steps and links to human and emergency support. |
 | Guest mode and accounts | Use browser storage as a guest or save account data through the API. |
 
+## How it works
+
+The Next.js browser app supports guest data in local storage and sends registered-user operations
+to the FastAPI backend. The backend validates requests, scopes account data by user, and persists
+records with SQLAlchemy in SQLite locally or PostgreSQL when configured. Garden flowers are
+derived deterministically from check-ins. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for
+service boundaries and data flow.
+
 ## Technology
 
 - **Frontend:** Next.js App Router, React, TypeScript, Tailwind CSS, Framer Motion, Lucide React.
@@ -37,7 +57,7 @@ or hosted deployment is implied by the presence of integration code.
 
 ## Local development
 
-Requirements: Python 3.11 or newer, Node.js 20 or newer, and npm.
+Requirements: Python 3.11 or newer, Node.js 20.19 or newer, and npm.
 
 ### Windows PowerShell
 
@@ -135,7 +155,10 @@ approved UI update accurately discloses the optional external processing and off
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md),
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), and
-[docs/TECH_STACK_AUDIT.md](docs/TECH_STACK_AUDIT.md) for implementation and verification details.
+[docs/TECH_STACK_AUDIT.md](docs/TECH_STACK_AUDIT.md),
+[docs/AZURE_PRIVACY_SAFETY.md](docs/AZURE_PRIVACY_SAFETY.md),
+[docs/SECURITY_REMEDIATION.md](docs/SECURITY_REMEDIATION.md), and
+[docs/DATABASE_OPERATIONS.md](docs/DATABASE_OPERATIONS.md) for implementation and operating details.
 
 Authenticated written check-in reflections are also analyzed locally with VADER. The backend stores
 nullable positive, negative, neutral, and compound scores alongside each check-in; long reflections
@@ -179,14 +202,13 @@ mindsy/
 |       |-- components/   # Shared UI and app state
 |       `-- lib/          # API client, garden, insights, local storage
 |-- docs/
-|-- app.py                # Historical Streamlit prototype
-|-- utils.py              # Historical prototype helpers
-`-- requirements.txt      # Historical prototype requirements
+`-- archive/
+    `-- streamlit-prototype/ # Unsupported historical prototype
 ```
 
-The maintained application is the Next.js frontend and FastAPI backend. Root-level Streamlit files
-are retained as historical prototype code and are not part of the current app's runtime or
-dependency installation.
+The maintained application is only the Next.js frontend and FastAPI backend. The Streamlit
+prototype and its separate requirements are archived and are not installed or used by the current
+app. See [archive/streamlit-prototype/README.md](archive/streamlit-prototype/README.md).
 
 ## Deployment and limitations
 
@@ -195,6 +217,15 @@ Azure inference has been verified. Production use still requires a persistent da
 secrets, a restricted CORS allow-list, appropriate hosting, and review of privacy and safety needs.
 The Companion is not a clinical or emergency service; automated crisis phrase matching cannot
 replace human assessment.
+
+## Roadmap and contribution notes
+
+Before any public release, priorities include a privacy and safety review, localized crisis
+resources, account deletion and recovery workflows, persistent-database backup/restore drills, and
+accessible usability review. Azure Companion disclosure and consent require a separately approved
+frontend change; until then the deployed UI must remain opted out. Contributions should preserve
+existing API contracts, guest mode, account isolation, and the frozen visual design unless a
+separate change explicitly authorizes otherwise.
 
 ## License
 
