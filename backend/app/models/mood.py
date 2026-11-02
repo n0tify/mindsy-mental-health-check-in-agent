@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, DateTime, ForeignKey, String, Text
+from sqlalchemy import JSON, DateTime, Float, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import Base
@@ -36,6 +36,10 @@ class MoodEntry(Base):
     emotions: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     energy: Mapped[str] = mapped_column(String(16), nullable=False)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    sentiment_positive: Mapped[float | None] = mapped_column(Float, nullable=True)
+    sentiment_negative: Mapped[float | None] = mapped_column(Float, nullable=True)
+    sentiment_neutral: Mapped[float | None] = mapped_column(Float, nullable=True)
+    sentiment_compound: Mapped[float | None] = mapped_column(Float, nullable=True)
     tags: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
 
     user: Mapped[User] = relationship(back_populates="mood_entries")

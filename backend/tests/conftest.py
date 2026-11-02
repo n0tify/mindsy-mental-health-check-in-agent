@@ -12,7 +12,7 @@ import pytest
 # database before anything from `app` is imported.
 _TEST_DIR = Path(tempfile.mkdtemp(prefix="mindsy-tests-"))
 os.environ["DATABASE_URL"] = f"sqlite:///{_TEST_DIR / 'test.db'}"
-os.environ["JWT_SECRET"] = "test-secret-not-for-production"
+os.environ["JWT_SECRET"] = "test-only-jwt-secret-not-for-production-32chars"
 os.environ["ACCESS_TOKEN_DAYS"] = "7"
 
 from fastapi.testclient import TestClient  # noqa: E402

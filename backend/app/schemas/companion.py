@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, field_validator
 
 class CompanionRequest(BaseModel):
     message: str = Field(min_length=1, max_length=1000)
+    allow_external_processing: bool = False
 
     @field_validator("message")
     @classmethod

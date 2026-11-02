@@ -28,6 +28,13 @@ def _int_env(name: str, default: int) -> int:
         return default
 
 
+def _bool_env(name: str, default: bool = False) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass(frozen=True)
 class Settings:
     app_name: str = "Mindsy API"
@@ -51,10 +58,36 @@ class Settings:
             if origin.strip()
         ]
     )
+    azure_openai_enabled: bool = field(
+        default_factory=lambda: _bool_env("AZURE_OPENAI_ENABLED")
+    )
+    azure_openai_endpoint: str = field(
+        default_factory=lambda: os.getenv("AZURE_OPENAI_ENDPOINT", "").strip()
+    )
+    azure_openai_api_key: str = field(
+        default_factory=lambda: os.getenv("AZURE_OPENAI_API_KEY", "").strip()
+    )
+    azure_openai_deployment: str = field(
+        default_factory=lambda: os.getenv("AZURE_OPENAI_DEPLOYMENT", "").strip()
+    )
+    azure_openai_api_version: str = field(
+        default_factory=lambda: os.getenv("AZURE_OPENAI_API_VERSION", "").strip()
+    )
 
     @property
     def uses_default_secret(self) -> bool:
         return self.jwt_secret == DEFAULT_JWT_SECRET
+
+    @property
+    def azure_openai_configured(self) -> bool:
+        return all(
+            (
+                self.azure_openai_endpoint,
+                self.azure_openai_api_key,
+                self.azure_openai_deployment,
+                self.azure_openai_api_version,
+            )
+        )
 
     def validate(self) -> None:
         if self.app_env == "production" and (

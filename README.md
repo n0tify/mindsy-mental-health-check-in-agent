@@ -1,61 +1,85 @@
-# 🌸 Mindsy
+# Mindsy
 
-**A pastel, uplifting space for emotional check-ins — where every feeling plants something.**
+Mindsy is a gentle emotional check-in and journaling app. Check-ins grow a stable Living Garden,
+while Insights, the Journal, Mood Weather, and small self-care tools offer ways to reflect.
 
-Mindsy is a full-stack mental wellness and emotional check-in application. You can use it
-immediately as a guest, or create an account to keep your history. Every check-in grows one
-stable, clickable plant in a contained **Living Garden**.
+> Mindsy is a wellness journal, not a medical service. It does not diagnose, treat, or replace
+> professional care. If you are in immediate danger, contact your local emergency number.
 
-Mindsy is a wellness journal, **not** a medical service. It does not diagnose, treat or replace
-professional care.
+## What is included
 
----
-
-## What's inside
-
-| Area | What it does |
+| Feature | Description |
 | --- | --- |
-| **Home** | Emotional welcome, sample garden, feature overview |
-| **Check-in** | Five steps: feelings (multi-select), energy, reflection, tags, plant |
-| **Living Garden** | Deterministic SVG botanical garden, clickable flowers, detail overlay |
-| **Insights** | Mood distribution, energy split, 14-day timeline, streak, gentle observations |
-| **Journal** | Create, search, edit and delete longer reflections |
-| **Joy Deck** | 24 animated, doable micro-prompts |
-| **Breathe** | Guided 4-4-6-2 breathing with reduced-motion support |
-| **Mood Weather** | Metaphorical read on the last seven days |
-| **Gratitude Wall** | Pastel notes you can pin and remove |
-| **Companion** | Rule-based supportive listener with crisis routing and honest limits |
-| **Support** | Grounding exercise, crisis guidance, links to real help |
-| **Accounts** | Signup, login, logout, persistent sessions, per-user data isolation |
-| **Guest mode** | Full experience with browser storage, migrated into an account on sign-in |
+| Check-in | Name feelings, energy, a reflection, and optional tags in five short steps. |
+| Living Garden | Each check-in becomes a deterministic, clickable flower. |
+| Insights | Mood and energy summaries, a 14-day check-in timeline, streak, and gentle observations. |
+| Journal | Create, search, edit, and delete longer reflections. |
+| Joy Deck | Draw from 24 small, optional activities. |
+| Breathe | A guided 4-4-6-2 breathing rhythm with reduced-motion support. |
+| Mood Weather | A non-diagnostic metaphor based on recent check-ins. |
+| Gratitude Wall | Pin and remove brief notes. |
+| Companion | Rule-based support by default, with optional VADER context and Azure OpenAI responses. |
+| Support | Grounding steps and links to human and emergency support. |
+| Guest mode and accounts | Use browser storage as a guest or save account data through the API. |
 
----
+## Technology
 
-## Stack
+- **Frontend:** Next.js App Router, React, TypeScript, Tailwind CSS, Framer Motion, Lucide React.
+- **Backend:** Python 3.11, FastAPI, Pydantic, SQLAlchemy, PyJWT, bcrypt.
+- **Data:** SQLite for local development; PostgreSQL is supported through SQLAlchemy and psycopg.
+- **Optional Companion services:** VADER runs locally. Azure OpenAI uses the official asynchronous
+  OpenAI Python SDK and is disabled unless explicitly enabled, fully configured, and explicitly
+  consented to per API request. The current UI remains opted out.
 
-**Frontend** — Next.js 15 (App Router), TypeScript, Tailwind CSS, Framer Motion, Lucide React
-**Backend** — Python (3.11 tested), FastAPI, SQLAlchemy 2, Pydantic v2, PyJWT, bcrypt
-**Database** — SQLite in development, PostgreSQL-ready in production
+The current frontend lint and TypeScript checks and backend tests are run locally; see
+[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) for the latest results. No live Azure request
+or hosted deployment is implied by the presence of integration code.
 
----
+## Local development
 
-## Quick start
+Requirements: Python 3.11 or newer, Node.js 20 or newer, and npm.
 
-### 1. Backend
+### Windows PowerShell
+
+From the repository root, create and install the backend environment:
+
+```powershell
+Set-Location backend
+py -3.11 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
+```
+
+Set a local `JWT_SECRET` in `backend/.env`, then start the API:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8010
+```
+
+In another PowerShell window:
+
+```powershell
+Set-Location frontend
+npm ci
+Copy-Item .env.example .env.local
+npm run dev
+```
+
+Open `http://localhost:3000`. The API is at `http://127.0.0.1:8010`; interactive API
+documentation is at `http://127.0.0.1:8010/docs`.
+
+### macOS and Linux
 
 ```bash
 cd backend
 python3 -m venv .venv
-source .venv/bin/activate          # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env                # then set JWT_SECRET
-uvicorn app.main:app --reload --port 8010
+.venv/bin/python -m pip install -r requirements.txt
+cp .env.example .env
+# Set a local JWT_SECRET in backend/.env.
+.venv/bin/python -m uvicorn app.main:app --reload --port 8010
 ```
 
-The API is now at `http://127.0.0.1:8010`, with interactive docs at
-`http://127.0.0.1:8010/docs`. Tables are created automatically on startup.
-
-### 2. Frontend
+In a second terminal:
 
 ```bash
 cd frontend
@@ -64,151 +88,114 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Both committed environment examples are templates; do not put real credentials in Git. For a
+different API port, update the frontend API URL and proxy target in `frontend/.env.local`, and
+update the backend CORS allow-list if the browser calls the API directly.
 
-Both `.env.example` files are committed; real `.env` files are not.
+## Companion sentiment and optional Azure AI
 
-### Environment variables
+The original response logic remains the default and is the fallback. Crisis phrase routing runs
+before sentiment analysis or any network request. When Azure is disabled, the API does not send
+the Companion message to Azure and returns the existing rule-based response.
 
-| File | Variable | Purpose |
-| --- | --- | --- |
-| `backend/.env` | `APP_ENV` | `development` locally; set to `production` on the API host |
-| | `DATABASE_URL` | `sqlite:///./mindsy.db` locally, PostgreSQL in production |
-| | `JWT_SECRET` | Long random signing key — **required** outside development |
-| | `ACCESS_TOKEN_DAYS` | Token lifetime (default 7) |
-| | `CORS_ORIGINS` | Comma separated browser origins allowed to call the API |
-| `frontend/.env.local` | `NEXT_PUBLIC_API_URL` | API base URL. Empty = same origin via the Next proxy |
-| | `API_PROXY_TARGET` | Where that proxy forwards `/api/*` (server-side only) |
+Only when Azure is enabled, fully configured, and the request explicitly opts into external
+processing does VADER analyze the current non-crisis message locally using its established compound
+thresholds (`>= 0.05` positive, `<= -0.05` negative, otherwise neutral). The score is a
+supplementary lexical signal, not a clinical assessment. If local analysis fails, the request
+continues without that context. Azure can then generate a brief supportive reflection; the existing
+tone, suggestions, disclaimer, and response fields are retained. Configuration errors, timeouts,
+connection/authentication errors, rate limits, missing deployments, and other provider failures all
+return the rule-based response. The current frontend does not send the opt-in flag and therefore
+continues to use the rule-based Companion.
 
-> The frontend never hardcodes `localhost`. All requests go through `NEXT_PUBLIC_API_URL`.
-> Leave it empty when frontend and API share an origin; Next.js then proxies `/api/*` to
-> `API_PROXY_TARGET`, which also avoids CORS entirely.
+To enable Azure, set these **on the backend only**, then restart the API:
 
----
+| Variable | Purpose |
+| --- | --- |
+| `AZURE_OPENAI_ENABLED` | Set to `true` to opt in; the default is `false`. |
+| `AZURE_OPENAI_ENDPOINT` | Azure OpenAI resource endpoint. |
+| `AZURE_OPENAI_API_KEY` | Server-side Azure credential. Never expose it to the browser. |
+| `AZURE_OPENAI_DEPLOYMENT` | The name of your Azure deployment serving GPT-4o; the deployment name itself need not be `gpt-4o`. |
+| `AZURE_OPENAI_API_VERSION` | A chat-completions API version supported by your Azure resource. |
 
-## The Living Garden
+All four Azure settings must be non-empty before the backend attempts a request. Missing or
+incorrect settings do not prevent startup; the Companion falls back. The SDK request uses an
+8-second timeout, disables automatic retries, and bounds its response. Automated tests use mocks
+and make no paid Azure requests.
 
-The signature feature. It is **derived, never randomly generated**:
+**Privacy:** local VADER processing does not persist the reflection. Only an explicitly consenting
+API request, with Azure enabled and configured, sends the current message and its derived sentiment
+summary to the configured Azure deployment. Azure-side handling and retention depend on the
+resource and account configuration. Mindsy does not write these request contents to application
+logs or add a database record for them. Do not enable the integration until the deployment's
+data-handling settings are appropriate for your use. The current Companion page still has its
+original static copy describing a rule-based engine and no paid AI provider. Because this change
+intentionally leaves the UI untouched, do not enable Azure for end users until a separately
+approved UI update accurately discloses the optional external processing and offers consent.
 
-1. Each check-in has a UUID.
-2. That UUID is hashed with 32-bit FNV-1a.
-3. The hash decides the species, variant, x position, depth row and scale.
-4. Growth stage comes from the check-in's age: seedling → growing → bloom.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md),
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), and
+[docs/TECH_STACK_AUDIT.md](docs/TECH_STACK_AUDIT.md) for implementation and verification details.
 
-Species mapping: happy → sunflower, calm → lavender, loved → rose, hopeful → sprout,
-sad → bluebell, anxious → lotus, angry → hibiscus, exhausted → moonflower, confused → iris,
-overwhelmed → peony, three or more feelings at once → mixed blossom.
+Authenticated written check-in reflections are also analyzed locally with VADER. The backend stores
+nullable positive, negative, neutral, and compound scores alongside each check-in; long reflections
+are analyzed using their first 1000 trimmed characters. These scores are supplementary, non-clinical
+signals and are not sent to Azure. Guest check-ins remain local in the browser until the existing
+guest-to-account migration. On startup, the backend adds the nullable score columns to existing
+databases without rewriting or deleting check-in rows.
 
-Because geometry is derived from persistent data, refreshing can never duplicate or reshuffle a
-plant. The same algorithm exists in `backend/app/services/garden.py` (used by `GET /api/garden`
-for signed-in users) and `frontend/src/lib/garden.ts` (used for guest gardens). Keep them in sync.
+## Tests and checks
 
----
+From the repository root:
 
-## Golden path (verify in two minutes)
-
-1. Start the backend and frontend.
-2. Create an account (or continue as a guest).
-3. Go to **Check-in**, select at least one feeling, pick energy, add a note and tags.
-4. Press **Plant this feeling** → you should see “Your feelings have been planted in your
-   garden.”
-5. Open **Garden** → exactly one plant appears.
-6. Refresh the page → the same plant, same place, no duplicate.
-7. Add a second check-in → a second plant appears.
-8. Click a flower → its date, mood, emotions, energy, tags and note appear.
-
-Guest data is moved into your account on first sign-in, keeping the original check-in dates.
-
----
-
-## Legacy Streamlit prototype
-
-The original hackathon prototype is retained at the repository root in `app.py` and `utils.py`,
-with its original root `requirements.txt`. It is historical source; the maintained, redesigned
-application is the Next.js frontend and FastAPI backend documented above. The prototype's Azure
-credentials and local speech dependencies are not configured by this project, so do not treat it
-as the production application.
-
----
-
-## Tests
-
-```bash
-cd backend
-.venv/bin/python -m pytest -q   # Windows: .venv\Scripts\python.exe -m pytest -q
+```powershell
+Set-Location backend
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
-**49 backend tests** cover signup/login validation, bcrypt storage, token auth, cross-user
-isolation (a user cannot read or delete another user's rows), check-in persistence, garden
-stability and containment, journal CRUD and search, gratitude, and companion safety routing.
-
-Frontend verification:
-
-```bash
-cd frontend
+```powershell
+Set-Location frontend
 npm run lint
-npm run typecheck   # strict TypeScript, no errors
-npm run build       # production build, all routes prerender/compile
+npm run typecheck
+npm run build
 ```
 
----
+The Azure tests use mocked SDK clients; no credentials are needed. The backend tests also cover
+the unchanged Companion response contract, the rule-based fallback, and crisis routing.
 
-## Repository layout
+## Project layout
 
-```
+```text
 mindsy/
-├── frontend/
-│   ├── src/app/            # routes (App Router)
-│   ├── src/components/     # navigation, provider, garden, flowers, shared UI
-│   ├── src/lib/            # API client, garden engine, insights, weather, storage
-│   ├── public/
-│   ├── package.json
-│   └── .env.example
-├── backend/
-│   ├── app/
-│   │   ├── main.py
-│   │   ├── database.py
-│   │   ├── models/         # users, check-ins, journal, gratitude
-│   │   ├── schemas/        # Pydantic v2 contracts
-│   │   ├── routes/         # auth, entries, garden, journal, gratitude, companion
-│   │   └── services/       # security, garden derivation, companion responses
-│   ├── tests/
-│   ├── requirements.txt
-│   └── .env.example
-├── docs/
-│   ├── ARCHITECTURE.md
-│   └── DEPLOYMENT.md
-├── CHANGELOG.md
-├── LICENSE
-└── README.md
+|-- backend/
+|   |-- app/routes/       # FastAPI endpoints
+|   |-- app/schemas/      # Pydantic API contracts
+|   |-- app/services/     # Rules, garden, VADER, optional Azure client
+|   |-- app/models/       # SQLAlchemy models
+|   `-- tests/
+|-- frontend/
+|   `-- src/
+|       |-- app/          # Next.js routes
+|       |-- components/   # Shared UI and app state
+|       `-- lib/          # API client, garden, insights, local storage
+|-- docs/
+|-- app.py                # Historical Streamlit prototype
+|-- utils.py              # Historical prototype helpers
+`-- requirements.txt      # Historical prototype requirements
 ```
 
----
+The maintained application is the Next.js frontend and FastAPI backend. Root-level Streamlit files
+are retained as historical prototype code and are not part of the current app's runtime or
+dependency installation.
 
-## Security notes
+## Deployment and limitations
 
-- Passwords hashed with **bcrypt** (never stored or returned in plain text).
-- JWT bearer tokens, verified on every protected request.
-- Every query is scoped to the authenticated user; foreign ids return `404`, never `403`, so
-  existence is not leaked.
-- Input validation on the server (moods, energy, tags, lengths, timestamps).
-- CORS is an explicit allow-list, not `*`.
-- No secrets in the repository; `.env.example` documents what is needed.
-- Access tokens live in `localStorage`, which is convenient for a single-page demo but readable by
-  any injected script. For a hardened deployment, move to short-lived httpOnly refresh cookies and
-  add CSRF protection.
-
----
-
-## Deployment
-
-Frontend → Vercel or Netlify. Backend → any Python host (Render, Railway, Fly.io).
-Use PostgreSQL in production. Full steps and a checklist live in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). Verified
-technology evidence and release checks are recorded in [docs/TECH_STACK_AUDIT.md](docs/TECH_STACK_AUDIT.md)
-and [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md).
-
----
+Deployment guidance is in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). No external deployment or live
+Azure inference has been verified. Production use still requires a persistent database, production
+secrets, a restricted CORS allow-list, appropriate hosting, and review of privacy and safety needs.
+The Companion is not a clinical or emergency service; automated crisis phrase matching cannot
+replace human assessment.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).

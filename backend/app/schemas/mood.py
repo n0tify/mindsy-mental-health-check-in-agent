@@ -85,6 +85,10 @@ class MoodEntryRead(BaseModel):
     emotions: list[str]
     energy: str
     note: str | None
+    sentiment_positive: float | None = None
+    sentiment_negative: float | None = None
+    sentiment_neutral: float | None = None
+    sentiment_compound: float | None = None
     tags: list[str]
 
     @field_serializer("created_at")

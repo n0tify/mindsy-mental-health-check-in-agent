@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.routes import entries as entries_route
+
 ENTRY = {
     "primary_mood": "calm",
     "emotions": ["calm", "hopeful"],
@@ -23,10 +25,33 @@ def test_create_and_list_entry(client, user):
     assert body["energy"] == "medium"
     assert body["tags"] == ["self", "health"]
     assert body["created_at"].endswith("Z")
+    assert body["sentiment_positive"] is not None
+    assert body["sentiment_negative"] is not None
+    assert body["sentiment_neutral"] is not None
+    assert body["sentiment_compound"] is not None
 
     listed = client.get("/api/entries", headers=user["headers"])
     assert listed.status_code == 200
     assert [entry["id"] for entry in listed.json()] == [body["id"]]
+    loaded = client.get(f"/api/entries/{body['id']}", headers=user["headers"])
+    assert loaded.status_code == 200
+    assert {
+        key: loaded.json()[key]
+        for key in (
+            "sentiment_positive",
+            "sentiment_negative",
+            "sentiment_neutral",
+            "sentiment_compound",
+        )
+    } == {
+        key: body[key]
+        for key in (
+            "sentiment_positive",
+            "sentiment_negative",
+            "sentiment_neutral",
+            "sentiment_compound",
+        )
+    }
 
 
 def test_entries_are_newest_first(client, user):
@@ -91,6 +116,37 @@ def test_entry_note_is_optional(client, user):
     response = client.post("/api/entries", json=payload, headers=user["headers"])
     assert response.status_code == 201
     assert response.json()["note"] is None
+    assert response.json()["sentiment_compound"] is None
+
+
+def test_sentiment_failure_does_not_prevent_check_in_save(client, user, monkeypatch):
+    def fail_analysis(_note: str):
+        raise RuntimeError("analyzer unavailable")
+
+    monkeypatch.setattr(entries_route, "analyze_sentiment", fail_analysis)
+
+    response = client.post("/api/entries", json=ENTRY, headers=user["headers"])
+
+    assert response.status_code == 201
+    assert response.json()["note"] == ENTRY["note"]
+    assert response.json()["sentiment_compound"] is None
+
+
+def test_sentiment_scores_are_isolated_between_users(client, register, auth_headers):
+    owner = register()
+    other_user = register()
+    owner_headers = auth_headers(owner["access_token"])
+    other_headers = auth_headers(other_user["access_token"])
+
+    created = client.post("/api/entries", json=ENTRY, headers=owner_headers)
+    owner_entry = client.get(
+        f"/api/entries/{created.json()['id']}", headers=owner_headers
+    )
+    other_entries = client.get("/api/entries", headers=other_headers)
+
+    assert owner_entry.status_code == 200
+    assert owner_entry.json()["sentiment_compound"] is not None
+    assert other_entries.json() == []
 
 
 def test_users_cannot_read_or_delete_another_users_entry(client, register, auth_headers):

@@ -1,89 +1,117 @@
-# Mindsy technical stack and CV-claim audit
+# Mindsy technology and integration audit
 
-**Audit date:** 2026-11-03
-**Scope:** Current `mindsy` workspace, the documented GitHub target's `main` tip, and checks
-listed in [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md).
+## Scope and evidence
 
-## Evidence-based CV technology table
+This audit distinguishes the maintained Next.js/FastAPI application from the retained root-level
+Streamlit prototype. Integration code, deployment configuration, and successful live service use
+are separate claims.
 
-| CV technology | Evidence | Status |
+| Status | Meaning |
+| --- | --- |
+| **IMPLEMENTED** | The corresponding source and dependency/configuration support are present. |
+| **CONFIGURED** | Required runtime settings are present and enabled in the environment being checked. |
+| **VERIFIED** | The behavior passed a test or a successful end-to-end request; the verification method
+  is stated explicitly. |
+
+## VADER and Azure OpenAI status
+
+| Capability | Implementation | Configuration | Verification |
+| --- | --- | --- | --- |
+| VADER sentiment | **IMPLEMENTED** in `backend/app/services/sentiment.py`; local check-in processing analyzes non-empty notes and persists nullable compound, positive, negative, and neutral scores. Analysis uses the first 1000 trimmed characters for longer notes. | **CONFIGURED** by the pinned `vaderSentiment` dependency; no credentials or remote service required. | **VERIFIED** by positive, negative, mixed, neutral, empty, long-text, persistence, failure-fallback, legacy-migration, and account-isolation tests. |
+| Azure OpenAI response | **IMPLEMENTED** in `backend/app/services/azure_openai.py` with official `AsyncAzureOpenAI`, bounded output, 8-second timeout, and zero SDK retries. | **NOT CONFIGURED** in the checked local environment: Azure is disabled and required settings are incomplete. | **VERIFIED** for the mocked SDK success/error paths and Companion fallback. **NOT VERIFIED** against a live Azure deployment. |
+| Crisis routing | Existing rule-based phrase check runs before VADER/Azure. | Does not depend on Azure settings. | **VERIFIED** by API tests asserting crisis requests do not invoke either optional service. |
+| Check-in API contract | Existing check-in fields remain; four nullable sentiment score fields are additive. Existing rows without scores remain valid. | Guest check-ins remain browser-local; scores are computed after the existing account migration submits a note to the API. | **VERIFIED** by API persistence, empty-note compatibility, legacy-schema migration, and account-isolation tests. |
+| Companion API contract | Existing response fields are unchanged. The request accepts an optional `allow_external_processing` boolean that defaults to false. | Existing frontend sends only `message`, so it never opts in. | **VERIFIED** by tests for explicit consent, default opt-out, crisis precedence, and the exact response field set. |
+
+Azure uses the configured `AZURE_OPENAI_DEPLOYMENT` value as the model/deployment identifier. The
+operator must point it at a deployment serving GPT-4o; the code does not assume it is named
+`gpt-4o` and cannot verify its underlying model. Presence of an endpoint variable or code is not
+evidence that credentials, deployment, or live inference are configured.
+The checked runtime reported Azure disabled and incomplete; no secret values were printed or
+recorded.
+
+## Maintained application stack
+
+| Technology | Evidence | Status |
 | --- | --- | --- |
-| Python | `backend/app/main.py` starts the FastAPI app; `backend/app/routes/` contains the API; backend tests are Python. Python 3.11 was used for local validation. | VERIFIED |
-| Streamlit | The target GitHub `main` contains the original `app.py` prototype, which imports functions from `utils.py`. These files were retained from the remote when preparing the release tree. | VERIFIED |
-| VADER | The target's original `utils.py` creates `SentimentIntensityAnalyzer` and calls it in `detect_mood()`. The redesigned backend has no VADER implementation or dependency. | PARTIALLY IMPLEMENTED |
-| GPT-4o | The target's original `utils.py` configures `AzureOpenAI` and calls it in `get_suggestion()` and `generate_journal_entry()`. The current app's companion is rule-based (`backend/app/services/companion.py`). No Azure credentials or live deployment were verified. | PARTIALLY IMPLEMENTED |
-| Azure OpenAI | The original prototype reads `AZURE_OPENAI_API_KEY`, `AZURE_ENDPOINT`, and `AZURE_DEPLOYMENT` from the environment and calls the Azure client. The current workspace has no Azure client, server configuration, or credentials. | PARTIALLY IMPLEMENTED |
-| Text-to-speech | The original prototype has `speak(message)` in `utils.py`, using `pyttsx3`. It is not in the redesigned app, and the original `requirements.txt` does not list `pyttsx3`. | PARTIALLY IMPLEMENTED |
-| Next.js | `frontend/package.json` pins Next.js 15; `frontend/src/app/` contains the App Router pages. The production build completed. | VERIFIED |
-| TypeScript | The application source is `.ts`/`.tsx`; `frontend/tsconfig.json` enables `strict`; `npm run typecheck` passed. | VERIFIED |
-| Tailwind CSS | `frontend/tailwind.config.ts` and `frontend/src/app/globals.css` configure and use Tailwind. The Next.js production build compiled CSS. | VERIFIED |
-| FastAPI | `backend/app/main.py` creates the FastAPI app, registers routers, configures CORS and exposes `/api/health`; route and validation tests pass. | VERIFIED |
+| Next.js App Router / React | `frontend/package.json`, `frontend/src/app/`, and shared components. | **IMPLEMENTED**; lint and TypeScript checks pass locally. |
+| TypeScript | Application source is `.ts`/`.tsx`; strict TypeScript configuration and `npm run typecheck`. | **IMPLEMENTED AND VERIFIED** by typecheck. |
+| Tailwind CSS | Tailwind config and application utility classes. | **IMPLEMENTED**; frontend files were not changed for this integration. |
+| Framer Motion / Lucide | Declared frontend dependencies and imported by UI components. | **IMPLEMENTED**. |
+| FastAPI / Uvicorn | Backend app, routers, ASGI entrypoint, and local API tests. | **IMPLEMENTED AND VERIFIED** by backend tests and the local health check. |
+| Pydantic v2 | API request/response validation and serialization schemas. | **IMPLEMENTED AND VERIFIED** by backend tests. |
+| SQLAlchemy / SQLite | Relational models and default local database configuration. | **IMPLEMENTED AND VERIFIED** by existing API tests. |
+| PostgreSQL / psycopg | SQLAlchemy URL support and declared psycopg binary driver. | **IMPLEMENTED**; a production PostgreSQL integration test was not performed. |
+| PyJWT / bcrypt | Bearer-token security and password hashing service. | **IMPLEMENTED AND VERIFIED** by existing authentication tests. |
+| Browser `localStorage` | Guest data and session token storage in the frontend provider. | **IMPLEMENTED**; data is browser-local and JavaScript-accessible. |
 
-`PARTIALLY IMPLEMENTED` means source exists only in the legacy prototype or is not configured and
-validated end-to-end. It does not mean a paid service is operational.
+Resolved frontend package versions can differ within the ranges in `frontend/package.json`. The
+backend requirements pin FastAPI 0.115.6, Uvicorn 0.34.0, SQLAlchemy 2.0.36, Pydantic 2.10.4,
+PyJWT 2.15.0, bcrypt 4.2.1, python-dotenv 1.2.2, OpenAI 1.59.7, and vaderSentiment 3.3.2.
 
-## CV narrative claim verification
+## Companion behavior and privacy
 
-| Submitted claim | Evidence and limitation | Status |
-| --- | --- | --- |
-| Reworked the hackathon prototype into a check-in app with mood logging, journaling, and mood trends. | The redesigned workspace implements check-ins, journal CRUD, and insights; backend tests and the production frontend build pass. No external production deployment was verified. | PARTIALLY IMPLEMENTED |
-| Integrated VADER and GPT-4o via Azure OpenAI for personalized suggestions. | Source exists in the remote prototype, but is not integrated into the redesigned FastAPI app; Azure credentials and a live deployment were not verified. | PARTIALLY IMPLEMENTED |
-| Added journaling prompts, spoken encouragement, and optional calming audio. | The prototype has `generate_journal_entry()`, `speak()`, a speech button, and `st.audio(...)`. `pyttsx3` is absent from its requirements; server-side speech and remote audio playback were not validated. These are absent from the redesigned UI. | PARTIALLY IMPLEMENTED |
-| Redesigned the responsive interface with Next.js, TypeScript, Tailwind CSS, and Python/FastAPI. | The framework/source/config evidence is present in the current workspace; TypeScript, lint, production build, API tests, direct routes, and mobile/desktop home viewport checks passed. | VERIFIED |
-| Retained the original Streamlit prototype. | `app.py` and `utils.py` are present at the requested GitHub target's `main` tip and are preserved in the release tree. | VERIFIED |
+1. The existing deterministic `respond()` runs first. If it marks a request as a crisis, its
+   response returns immediately; no sentiment analyzer or Azure request is used.
+2. With Azure disabled, incompletely configured, or per-request consent absent, the existing
+   rule-based response returns before VADER runs; the message is not sent externally.
+3. With Azure enabled, fully configured, and `allow_external_processing=true`, VADER analyzes only
+   the current bounded message in process. If VADER
+   initialization or scoring fails, a warning logs the exception type only and the AI path may
+   continue without sentiment context.
+4. The Azure service requires all four non-empty endpoint/key/deployment/API-version settings.
+   Missing configuration or SDK/provider failures return the original rule-based reply.
+5. The response retains `reply`, `tone`, `suggestions`, `crisis`, and `disclaimer`. The separate
+   check-in response adds four optional VADER score fields; no frontend changes were required.
 
-## Reference and scope notes
+Only when enabled, fully configured, and the request sets `allow_external_processing=true` are the
+message and derived score sent to Azure. The app does not persist this request or log its contents,
+but external processing is a real privacy boundary. Azure retention/handling depends on the account
+and resource configuration. No HIPAA, GDPR, or other compliance claim is made. Phrase-based crisis
+detection is not comprehensive clinical assessment. The current frontend sends only `message` and
+therefore cannot opt in; its static copy describes a rule-based engine and no paid AI provider. The
+UI is unchanged here, so Azure must not be enabled for end users until an approved UI update
+discloses external processing and offers a consent choice.
 
-- At audit start the working copy was not a Git checkout and lacked the old prototype. The GitHub
-  target's `main` base was
-  [`0ae297cc3ae7dc3b828cbcc27e4a94a1ed367108`](https://github.com/n0tify/mindsy-mental-health-check-in-agent/commit/0ae297cc3ae7dc3b828cbcc27e4a94a1ed367108).
-  The root `app.py`, `utils.py`, and `requirements.txt` there represent the earlier Streamlit
-  prototype and are retained in the release tree. The verified release commit is
-  [`98d38b0a9ee500351c36a6ac9e18780ff08ce67d`](https://github.com/n0tify/mindsy-mental-health-check-in-agent/commit/98d38b0a9ee500351c36a6ac9e18780ff08ce67d).
-- Original prototype source: [`app.py`](https://github.com/n0tify/mindsy-mental-health-check-in-agent/blob/main/app.py),
-  [`utils.py`](https://github.com/n0tify/mindsy-mental-health-check-in-agent/blob/main/utils.py),
-  and [`requirements.txt`](https://github.com/n0tify/mindsy-mental-health-check-in-agent/blob/main/requirements.txt).
-- The redesigned application in this workspace is Next.js + TypeScript + Tailwind CSS with a
-  FastAPI/SQLAlchemy backend. Its documented companion is deterministic and rule-based; it does
-  not pretend to use an LLM.
-- The prototype's Azure calls catch broad exceptions and return exception text to the caller.
-  Credentials, a live Azure deployment, timeout behavior, and provider error handling were not
-  verified; the prototype is not a production substitute for the current API.
-- The prototype's `show_mood_trend()` calls `st.pyplot()` from `utils.py`, but `st` is not imported
-  into that module; the calling app's `streamlit` import is not in the utility module's namespace.
-  The redesigned app has its own Insights page and backend-tested data paths.
-- The prototype's `pyttsx3` voice runs locally on the Python host, not in the browser. The redesigned
-  app has no corresponding voice control or optional audio integration.
-- The original Streamlit files were restored from the existing remote branch without replacing its
-  history. They remain a legacy prototype, not the maintained production frontend.
+## Legacy Streamlit prototype
 
-## Current application architecture
+Root `app.py`, `utils.py`, and `requirements.txt` are historical prototype files, not part of the
+maintained app:
 
-- **Frontend:** Next.js App Router, TypeScript, Tailwind CSS, Framer Motion, Lucide React.
-- **Backend:** Python 3.11 tested locally, FastAPI, Pydantic v2, SQLAlchemy 2, PyJWT, bcrypt.
-- **Persistence:** SQLite locally; SQLAlchemy is configured for PostgreSQL, and the psycopg binary
-  driver is included for production. Local guest/account tokens and guest journal/check-in data use
-  browser `localStorage`; account data is stored server-side.
-- **Authentication:** bearer JWTs, with tokens stored in browser `localStorage`; password hashing
-  uses bcrypt. This is a documented portfolio tradeoff, not an httpOnly-cookie deployment.
-- **Routes:** `/api/auth/*`, `/api/entries`, `/api/garden`, `/api/journal`, `/api/gratitude`,
-  `/api/companion`, and `/api/health`.
-- **Configuration:** `backend/.env` is loaded by the backend; frontend build-time
-  `NEXT_PUBLIC_API_URL` and server-only `API_PROXY_TARGET` configure API routing.
-- **Deployment:** separate frontend and backend services are documented. PostgreSQL is recommended
-  where host filesystems are ephemeral. No deployment to an external host was performed.
+- `utils.py` contains VADER sentiment and Azure client calls, but its output is not wired into the
+  current Next.js/FastAPI Companion.
+- The legacy Azure code uses `AZURE_ENDPOINT`, `AZURE_DEPLOYMENT`, and
+  `AZURE_OPENAI_API_KEY`; the maintained integration uses the documented `AZURE_OPENAI_*` names.
+- The prototype's `show_mood_trend()` references `st.pyplot` although `st` is not imported in
+  `utils.py`. The prototype also imports `pyttsx3`, which is absent from root
+  `requirements.txt`.
+- Root-level prototype code has not been used to verify the current API integration.
 
-## Security and deployment caveats
+Do not describe prototype-only Azure/VADER calls as verified in the redesigned application.
 
-- A pre-existing fixed development JWT secret was being used because backend `.env` was not loaded.
-  The backend now loads `.env` and rejects the default, example placeholder, or a secret shorter
-  than 32 characters when `APP_ENV=production`.
-- Local secret files and the local SQLite database are ignored by `.gitignore`. No credential-shaped
-  API key was found in the current source scan. This was not a full scan of all remote Git history.
-- The original prototype's environment variable names are configuration hooks, not evidence that
-  Azure credentials or a GPT-4o deployment are available.
-- The dependency audit found 19 moderate and 1 high frontend advisories. The high advisory is in
-  PostCSS nested under the pinned Next.js 15.5.28; the audit tool offered only a breaking Next.js
-  16 upgrade. It was not force-upgraded.
-- External production credentials, a persistent PostgreSQL service, real frontend/API origins,
-  TLS, backup policy, and hosting are still required.
+## Dependency audit and release blockers
+
+The dependency audit found known advisories in the existing frontend and backend dependency trees.
+PyJWT and python-dotenv pins were moved to available patched, non-major releases. Remaining backend
+advisories: `pip-audit -r backend/requirements.txt` reports 16 findings across Starlette 0.41.3
+(constrained by the pinned FastAPI version) and pytest 8.3.4 (the reported fix requires pytest 9).
+The full frontend `npm audit` reports 20 findings (19 moderate, 1 high); the production dependency
+tree reports 2 (one moderate, one high) involving Next.js 15.5.28 and its nested PostCSS 8.4.31.
+npm's reported Next.js fix is 16.4.4, a major upgrade. These versions were not automatically
+changed because they carry compatibility risk and the frontend is frozen. Treat outstanding
+dependency advisories as deployment blockers until compatible upgrades or mitigations are reviewed
+and validated.
+
+The root Streamlit prototype is independently excluded as a production entrypoint; its Azure
+privacy path is not the supported API integration.
+
+## Deployment and test status
+
+- No deployment manifest for Vercel, Netlify, Render, Railway, or Docker was found in the tracked
+  application configuration. No hosted deployment was performed.
+- `GET /api/health` is a liveness response; it does not verify Azure or database connectivity.
+- Azure integration tests mock `AsyncAzureOpenAI`; no paid or live calls run in automated tests.
+- Production PostgreSQL, actual Azure credentials, live Azure inference, and host-level deployment
+  behavior remain unverified.
+- See [DEPLOYMENT.md](DEPLOYMENT.md) for configuration and post-deploy checks and
+  [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for the run-specific verification record.

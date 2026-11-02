@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -8,8 +10,10 @@ from ..database import get_db
 from ..deps import get_current_user
 from ..models import MoodEntry, User
 from ..schemas.mood import MoodEntryCreate, MoodEntryRead
+from ..services.sentiment import SentimentResult, analyze_sentiment
 
 router = APIRouter(prefix="/api", tags=["check-ins"])
+logger = logging.getLogger("mindsy.checkins")
 
 
 def _owned_entry(db: Session, user: User, entry_id: str) -> MoodEntry:
@@ -48,12 +52,26 @@ def create_entry(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> MoodEntryRead:
+    sentiment: SentimentResult | None = None
+    if payload.note:
+        try:
+            sentiment = analyze_sentiment(payload.note)
+        except Exception as exc:
+            logger.warning(
+                "Local check-in sentiment analysis unavailable (%s); saving check-in without scores.",
+                type(exc).__name__,
+            )
+
     entry = MoodEntry(
         user_id=user.id,
         primary_mood=payload.primary_mood,
         emotions=payload.emotions,
         energy=payload.energy,
         note=payload.note,
+        sentiment_positive=sentiment.positive if sentiment else None,
+        sentiment_negative=sentiment.negative if sentiment else None,
+        sentiment_neutral=sentiment.neutral if sentiment else None,
+        sentiment_compound=sentiment.compound if sentiment else None,
         tags=payload.tags,
         # Guest check-ins carry the moment they were actually written, so
         # history survives the move into a new account.

@@ -23,16 +23,20 @@ __pycache__/
 *.db
 *.sqlite
 *.sqlite3
+*.db-wal
+*.db-shm
+backend/backups/
 
 # Environment files (examples are committed, real ones are not)
 .env
-.env.local
-.env.development
-.env.production.*
+.env.*
 !.env.example
+!**/.env.example
 
 # Logs and OS noise
 *.log
+data/
+*_mood_logs.json
 .DS_Store
 Thumbs.db
 

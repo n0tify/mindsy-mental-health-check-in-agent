@@ -1,1 +1,1 @@
-"""Domain services: security, garden derivation, companion responses."""
+"""Domain services for security, garden, Companion, sentiment, and optional AI."""

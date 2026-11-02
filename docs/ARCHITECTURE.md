@@ -1,175 +1,160 @@
 # Mindsy architecture
 
-## 1. System shape
+## Application boundary
 
-```
-Browser (Next.js 15 App Router)
-   │
-   │  fetch `${NEXT_PUBLIC_API_URL}/api/...`
-   │  (empty base → same-origin /api proxy in next.config.ts)
-   ▼
-FastAPI (Python; 3.11 tested locally)
-   │  routers → services → SQLAlchemy 2 → SQLite | PostgreSQL
-   ▼
-users · mood_entries · journal_entries · gratitude_notes
-```
+The maintained application has a Next.js/React browser client and a FastAPI service. The root
+Streamlit prototype (`app.py`, `utils.py`, and root `requirements.txt`) is retained separately and
+is not imported by the maintained app.
 
-Two client modes share one UI:
+```mermaid
+flowchart LR
+    Browser["Browser: Next.js / React"]
+    State["MindsyProvider"]
+    Local["Browser localStorage<br/>guest data and JWT"]
+    Api["Frontend API client"]
+    Proxy["Optional Next.js /api proxy"]
+    FastAPI["FastAPI"]
+    Auth["Auth and ownership checks"]
+    Routes["Entries / Garden / Journal / Gratitude / Companion"]
+    DB["SQLAlchemy<br/>SQLite local / PostgreSQL hosted"]
 
-- **Guest** — check-ins, journal entries and gratitude notes live in `localStorage` and are
-  rendered through the same components.
-- **Account** — a JWT is stored locally, the API becomes the source of truth, and the garden
-  geometry comes from `GET /api/garden`.
-
-`MindsyProvider` is the single seam: every page reads `entries`, `plants`, `journal`,
-`gratitude` and the mutation functions from it, so no page knows which storage layer is active.
-
-## 2. Data model
-
-### User
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID string (PK) | |
-| name | string(80) | collapsed whitespace |
-| email | string(255) unique indexed | stored lower-case |
-| password_hash | string(255) | bcrypt |
-| created_at | datetime | naive UTC |
-
-### MoodEntry
-| Column | Type | Notes |
-| --- | --- | --- |
-| id | UUID string (PK) | seed for the garden hash |
-| user_id | FK users.id, cascade | indexed |
-| created_at | datetime | naive UTC, optional client timestamp on create |
-| primary_mood | string(32) | validated against the mood catalogue |
-| emotions | JSON list | de-duplicated, 1–8 entries |
-| energy | string(16) | low / medium / high |
-| note | text, nullable | trimmed, ≤4000 chars |
-| tags | JSON list | subset of the tag catalogue |
-
-### JournalEntry
-`id, user_id, title(120), body(text), mood (nullable), created_at, updated_at`
-
-### GratitudeNote
-`id, user_id, text(280), created_at`
-
-**PostgreSQL readiness:** only portable types are used (`String`, `Text`, `DateTime`, generic
-`JSON`, `Boolean`-free schema). Switching `DATABASE_URL` to `postgresql+psycopg://…` requires no
-model changes; add Alembic for managed migrations before production traffic.
-
-**Timestamps:** SQLite drops offsets, so everything is stored as naive UTC and serialised with an
-explicit `Z` by `schemas/common.iso_utc`. Without that a browser would read stored times as local
-time and shift every date.
-
-## 3. API surface
-
-| Method | Path | Auth | Purpose |
-| --- | --- | --- | --- |
-| POST | `/api/auth/signup` | – | Create account, returns token + user |
-| POST | `/api/auth/login` | – | Verify credentials |
-| GET | `/api/auth/me` | Bearer | Current profile (session restore) |
-| POST | `/api/auth/logout` | Bearer | Explicit sign-out acknowledgement |
-| GET | `/api/entries` | Bearer | Check-ins, newest first |
-| POST | `/api/entries` | Bearer | Create a check-in |
-| GET | `/api/entries/{id}` | Bearer | Single check-in (owner only) |
-| DELETE | `/api/entries/{id}` | Bearer | Remove a check-in and its flower |
-| GET | `/api/garden` | Bearer | Derived plants + overlay data |
-| GET | `/api/journal` | Bearer | List/search (`q`, `mood`) |
-| POST | `/api/journal` | Bearer | Create |
-| PATCH | `/api/journal/{id}` | Bearer | Update |
-| DELETE | `/api/journal/{id}` | Bearer | Delete |
-| GET | `/api/gratitude` | Bearer | List notes |
-| POST | `/api/gratitude` | Bearer | Add a note |
-| DELETE | `/api/gratitude/{id}` | Bearer | Remove a note |
-| POST | `/api/companion` | – | Supportive reply (guests included) |
-| GET | `/api/health` | – | Liveness |
-
-Errors: `401` unauthenticated, `409` duplicate email, `422` validation, `404` for any row the
-caller does not own (deliberately not `403`, which would confirm existence).
-
-## 4. Authentication flow
-
-1. Signup hashes the password with bcrypt (72-byte truncation handled explicitly) and returns a
-   JWT (`HS256`, `sub = user.id`, `exp = now + 7 days`).
-2. The client stores the token and sends `Authorization: Bearer <token>`.
-3. `deps.get_current_user` decodes the token, loads the user and rejects anything invalid with a
-   single generic 401.
-4. On load the provider calls `/api/auth/me`; an invalid token clears local state and falls back to
-   guest mode rather than leaving a half-authenticated UI.
-
-**Guest → account migration:** on the first successful signup/login, the provider posts any local
-check-ins, journal entries and gratitude notes to the API and then clears local storage. Check-in
-`created_at` is accepted (bounded to the last 400 days, never in the future) so a guest's history
-keeps its real dates and the garden keeps its growth timeline.
-
-## 5. The Living Garden
-
-Geometry is a pure function of the check-in id plus its age:
-
-```python
-digest = fnv1a(entry.id)          # 32-bit, identical in Python and TypeScript
-x      = 8 + (digest % 85)        # 8–92 % of the container width
-row    = (digest >> 8) % 3        # 0 = back, 1 = middle, 2 = front
-y      = (62, 72, 82)[row] + (digest >> 12) % 5
-variant = (digest >> 4) % 4
-scale  = row_scale * growth_scale * (1 + jitter)
+    Browser --> State
+    State <--> Local
+    State --> Api
+    Api -->|"direct API URL"| FastAPI
+    Api -->|"same-origin /api"| Proxy
+    Proxy --> FastAPI
+    FastAPI --> Auth
+    FastAPI --> Routes
+    Auth --> DB
+    Routes --> DB
 ```
 
-- **Species** — `principal_mood → MOOD_PLANTS`, or `blossom` when three or more feelings were
-  named.
-- **Growth** — under 24 h is a seedling, under 7 days is growing, older is full bloom.
-- **Containment** — the scene is `relative overflow-hidden`; plants are anchored with
-  `left: x%` and `bottom: 100 - y%`, translated `-50%` horizontally, and drawn bottom-up. Nothing
-  can escape the container.
-- **No duplicates** — there is no “plant row” to insert. Reading the garden twice is idempotent;
-  the same id always yields the same plant.
-- **Rendering** — `Flower.tsx` draws original SVG botanicals (11 species, growth-dependent petal
-  layers), not emoji.
+The frontend can call the API directly (`NEXT_PUBLIC_API_URL`) or use the Next.js `/api/*` rewrite
+(`API_PROXY_TARGET`). Direct calls require the API CORS allow-list to include the frontend origin;
+the same-origin proxy does not require browser-to-API CORS.
 
-`GET /api/garden` exists so the garden is also a first-class API resource and is covered by tests.
-The frontend mirrors the algorithm for guest gardens, so both modes look identical.
+## Persistence and identity
 
-## 6. Insights and Mood Weather
+- The API stores users, mood entries, journals, and gratitude notes in SQLAlchemy tables.
+- SQLite is the local default. PostgreSQL uses the included `psycopg` driver. Tables are created
+  during application startup; startup also applies the targeted nullable VADER-column migration
+  for existing `mood_entries` tables. An Alembic migration workflow is not present.
+- Authenticated API queries are scoped to the signed-in user. Passwords are bcrypt-hashed and the
+  API uses bearer JWTs.
+- The frontend stores guest data and the account token in browser `localStorage`. Guest data is
+  copied to the account during sign-up/sign-in; guest keys are cleared only after migration
+  succeeds. A partially completed migration may need attention before retrying.
+- Insights, weather, and the guest garden are derived in the frontend. The backend garden endpoint
+  derives account plants from check-ins rather than persisting a second garden record.
 
-Computed client-side from the visible check-ins, so guests get them too and no extra round trip is
-needed. Insights produce counts, percentages, a 14-day series, a streak and bounded narrative
-observations. Language is deliberately probabilistic (“you may have noticed…”), never diagnostic.
+## Stable garden derivation
 
-## 7. Companion safety
+For each check-in, both the frontend and backend implementations hash the ASCII UUID using 32-bit
+FNV-1a. The digest determines the plant species/variant, position, depth, and scale. Age determines
+seedling, growing, or bloom status. This keeps a check-in's plant stable across refreshes without
+storing generated positions.
 
-`services/companion.py` is rule-based:
+The paired implementations are `frontend/src/lib/garden.ts` and
+`backend/app/services/garden.py`; changes to either algorithm should be checked against the other.
 
-1. Crisis phrases are checked first and short-circuit to safety copy that names local emergency
-   services and the Befrienders Worldwide directory — no invented phone numbers.
-2. Otherwise a tone is detected from keyword groups and a deterministic reflection plus up to
-   three suggestions is returned.
-3. Every reply carries a disclaimer that this is not a therapist, doctor or emergency service.
+## Companion request path
 
-Wiring a language model later should keep steps 1 and 3 outside the model call.
+```mermaid
+sequenceDiagram
+    participant Client as Existing frontend
+    participant API as POST /api/companion
+    participant Rules as Rule-based service
+    participant VADER as Local VADER
+    participant Azure as Azure OpenAI deployment
 
-## 8. Accessibility and motion
+    Client->>API: { message, allow_external_processing? } (maximum 1000 characters)
+    API->>Rules: Compute existing response and crisis result
+    alt Existing crisis phrase matched
+        Rules-->>API: Existing crisis response
+        API-->>Client: Existing CompanionReply contract
+    else Azure disabled, unconfigured, or consent absent
+        Rules-->>API: Rule-based response
+        API-->>Client: Existing CompanionReply contract
+    else Azure enabled, configured, and request explicitly consents
+        API->>VADER: Analyze bounded text locally
+        Note over VADER: VADER failure is logged by exception type only
+        API->>Azure: Message + optional sentiment context
+        alt Response received
+            Azure-->>API: Bounded supportive text
+            API-->>Client: Generated reply + existing tone/suggestions/disclaimer
+        else Azure provider failure
+            API-->>Client: Existing rule-based response
+        end
+    end
+```
 
-- Semantic landmarks, one `h1` per page, labelled inputs, `aria-pressed` on toggles.
-- Flower buttons are real buttons with descriptive labels; the overlay is a labelled modal with
-  Escape-to-close, focus on open, and body scroll lock.
-- Decorative layers are `aria-hidden` and `pointer-events-none` — they can never block a click.
-- `prefers-reduced-motion` is honoured globally, and the breathing circle additionally stops
-  scaling while keeping its textual countdown.
+The crisis check is performed by the existing rule-based service before the route checks Azure
+configuration. Crisis-matched input is not analyzed by VADER and is never sent to Azure. The
+existing request shape remains valid and opts out; an optional `allow_external_processing` boolean
+must be `true` for Azure processing. The response schema is unchanged:
 
-## 9. Deliberate trade-offs
+- Request: `{"message": "..."}`; optional consent: `{"allow_external_processing": true}`.
+- Response: `reply`, `tone`, `suggestions`, `crisis`, and `disclaimer`.
 
-| Decision | Why | Cost |
-| --- | --- | --- |
-| Derived garden instead of a `garden_plants` table | Cannot duplicate or drift; no migration needed | Geometry algorithm duplicated in Python and TS |
-| JWT in `localStorage` | Simple cross-origin deployment, no cookie/CSRF plumbing | Readable by XSS; see DEPLOYMENT hardening |
-| `create_all` instead of Alembic | One-command start for reviewers | No managed migrations; add Alembic before production |
-| SQLite default | Zero setup | Not safe for ephemeral serverless filesystems |
-| Insights computed client-side | Works for guests, instant | Not available to third-party API consumers |
+## Sentiment and Azure boundary
 
-## 10. Risks and next steps
+`backend/app/services/sentiment.py` processes at most 1000 characters locally and returns VADER's
+compound score and positive/negative/neutral proportions. Longer text is deterministically
+truncated to its first 1000 trimmed characters for analysis; the full reflection is retained as
+the user's check-in note. Classification uses VADER's established compound thresholds: `>= 0.05`
+positive, `<= -0.05` negative, otherwise neutral. Empty input is neutral with zero scores; invalid
+types are rejected.
 
-- Add rate limiting to `/api/companion` and `/api/auth/*` before public exposure.
-- Move tokens to httpOnly cookies when auth hardening matters.
-- Add Alembic migrations and a PostgreSQL instance for production.
-- Region-specific, verified crisis resources per deployment locale.
-- Optional: image export of the garden, and reminders.
+Authenticated check-in creation analyzes a non-empty note locally and stores the four numeric
+scores in nullable columns on the same user-owned row. Analysis errors are logged by exception type
+only and do not block saving. Existing check-in rows receive `NULL` scores; the response adds
+optional `sentiment_positive`, `sentiment_negative`, `sentiment_neutral`, and
+`sentiment_compound` fields. Existing selected emotions remain unchanged. Guest entries remain
+browser-local until the existing account migration submits them to the API.
+
+At startup, `init_db` performs an idempotent additive schema update that adds only missing nullable
+`FLOAT` columns to `mood_entries`, preserving existing records. This is not a general migration
+framework; back up production databases and test startup migrations before deployment.
+
+`backend/app/services/azure_openai.py` uses `AsyncAzureOpenAI` from the official OpenAI Python SDK.
+The configured Azure deployment name is passed as the chat-completions model; the code does not
+assume a deployment is named `gpt-4o`. The prompt requests short, supportive, non-clinical language
+and prohibits diagnosis, medication advice, claims of professional status, and dependency-forming
+language. Prompt instructions cannot guarantee model behavior and do not replace safety review.
+
+The Azure service is disabled by default. It requires `AZURE_OPENAI_ENABLED=true`, non-empty
+endpoint, API key, deployment, and API version, and explicit per-request consent. Otherwise, the
+route returns before running VADER. Requests use an eight-second timeout, no automatic SDK retries,
+a 180-token output limit, and a 1200-character output bound. Provider exception messages,
+credentials, and reflection text are not logged. Errors are reduced to safe categories before the
+route falls back to the existing deterministic response.
+The operator must select a deployment serving GPT-4o; the code cannot verify the underlying model
+without querying Azure.
+
+VADER is local inference. Only when Azure is enabled/configured and a request explicitly consents
+are the message and derived sentiment summary sent to the configured Azure endpoint. The current
+frontend sends only `message`, so it continues to use the rule-based response even if Azure is
+configured. No database or conversation history was added. Azure-side data handling depends on the
+configured resource and account policies; this project makes no regulatory-compliance claim. The
+current Companion page still describes a rule-based engine and no paid AI provider. Do not enable
+the frontend for Azure until a separately approved UI update accurately discloses external
+processing and obtains consent.
+
+## Configuration and operating notes
+
+Backend settings are loaded from environment variables and `backend/.env` via `python-dotenv`.
+`backend/.env.example` contains placeholders only. The frontend receives no Azure variable or key.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for local and hosted configuration.
+
+`GET /api/health` is a liveness response; it does not prove a database or Azure integration is
+available. The Companion tests mock the Azure SDK and do not make paid/live requests.
+
+## Boundaries
+
+- Mindsy is a wellness journal, not a diagnosis, treatment, or emergency service.
+- The current phrase-based crisis check is useful routing but is not a complete risk detector.
+- Account tokens are stored in browser `localStorage`; an injected script could read them.
+- No migration tool, account deletion workflow, email verification, or password-reset flow is
+  documented as implemented.
+- No external production deployment or real Azure inference is claimed.

@@ -1,23 +1,22 @@
 # Deploying Mindsy
 
-Two deployables: the **frontend** (static/Next server) and the **backend** (Python API). They can
-share a domain or live on separate hosts.
+Mindsy runs as a Next.js frontend and a Python API. This repository does not include provider
+deployment manifests, and no external deployment or live Azure request has been verified.
 
----
+## Local development
 
-## 0. Local development
+Use Python 3.11 or newer and Node.js 20 or newer.
 
-Use Python 3.11 or newer and Node.js 20 or newer. From the repository root, create the backend
-environment and local configuration:
+### Windows PowerShell
 
 ```powershell
-cd backend
+Set-Location backend
 py -3.11 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 Copy-Item .env.example .env
 ```
 
-Replace the example `JWT_SECRET` in `backend/.env` with a random value, then run:
+Set a local `JWT_SECRET` in `backend/.env`, then start the API:
 
 ```powershell
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8010
@@ -26,121 +25,146 @@ Replace the example `JWT_SECRET` in `backend/.env` with a random value, then run
 In another terminal:
 
 ```powershell
-cd frontend
+Set-Location frontend
 npm ci
 Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Open `http://localhost:3000`. If port 8010 is already in use, select an unused backend port and
-set both `NEXT_PUBLIC_API_URL` and `API_PROXY_TARGET` in `frontend/.env.local` to that API URL.
-The backend loads `backend/.env`; keep this file out of version control.
+Open `http://localhost:3000`. The API health endpoint is
+`http://127.0.0.1:8010/api/health`; interactive API docs are at `/docs`.
 
----
+The frontend example uses a direct API URL and matching server-side proxy target. When using a
+different port, update both in `frontend/.env.local`. If the browser calls the API directly, also
+include the frontend origin in backend `CORS_ORIGINS`.
 
-## 1. Production database
+## Optional Azure OpenAI Companion
 
-SQLite is fine locally but not on ephemeral or serverless filesystems. Use PostgreSQL:
+The default installation does not need Azure credentials. With
+`AZURE_OPENAI_ENABLED=false` (or unset), the Companion runs the existing rule-based response and
+does not send messages to Azure.
 
-```env
-DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:5432/mindsy
-```
+To opt in, set these environment variables on the **backend service only**:
 
-The PostgreSQL driver is included in `backend/requirements.txt`. Tables are created on startup;
-for a long-lived project, add Alembic before you have real user data.
-
----
-
-## 2. Backend (Render / Railway / Fly.io / any Python host)
-
-Build and start:
-
-```bash
-pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
-```
-
-Environment variables:
-
-| Variable | Required | Example |
+| Variable | Required to make requests | Notes |
 | --- | --- | --- |
-| `APP_ENV` | yes | `production` |
-| `DATABASE_URL` | yes | `postgresql+psycopg://…` |
-| `JWT_SECRET` | yes | A unique random value of at least 32 characters |
-| `ACCESS_TOKEN_DAYS` | no | `7` |
-| `CORS_ORIGINS` | yes | `https://mindsy.vercel.app,https://mindsy.app` |
+| `AZURE_OPENAI_ENABLED` | Yes | Must parse as `true`, `1`, `yes`, or `on`; default is false. |
+| `AZURE_OPENAI_ENDPOINT` | Yes | Azure OpenAI resource endpoint. |
+| `AZURE_OPENAI_API_KEY` | Yes | Keep only in the backend's secret manager/environment. |
+| `AZURE_OPENAI_DEPLOYMENT` | Yes | Name of your Azure deployment serving GPT-4o; its name need not be `gpt-4o`. |
+| `AZURE_OPENAI_API_VERSION` | Yes | A chat-completions API version supported by your resource. |
 
-Notes:
+Copy the placeholders from `backend/.env.example` for local work, fill in values privately, and
+restart the API. Do not add credentials to frontend variables, source files, screenshots, logs, or
+Git. If enabled with incomplete configuration, the service safely refuses to construct a client and
+the Companion returns its rule-based response.
 
-- `CORS_ORIGINS` must list the exact frontend origins (scheme + host, no trailing slash). Wildcards
-  are intentionally not used.
-- The API refuses to start in production if `JWT_SECRET` is the development default, an example
-  placeholder, or shorter than 32 characters.
-- Health check: `GET /api/health` → `{"status":"ok"}`.
-- Interactive docs: `/docs`.
+For non-crisis requests with Azure enabled, VADER analyzes up to 1000 characters locally only when
+the request explicitly sets `allow_external_processing: true`. Only then can the message and
+optional VADER context be sent to the configured deployment. The existing frontend sends only
+`message`, so it remains rule-based even when Azure is configured. This is external processing of
+sensitive reflection text. Check the Azure resource's data-handling configuration and applicable
+user-consent requirements before enabling it. Mindsy does not persist the request or log its
+content.
 
----
+The integration uses the official OpenAI Python SDK's `AsyncAzureOpenAI` client, an eight-second
+timeout, zero automatic retries, and bounded prompt/output sizes. Authentication errors, rate
+limits, timeouts, connection failures, missing deployments, malformed responses, and unexpected
+provider errors all fall back to the unchanged rule-based Companion. Crisis phrase routing runs
+first; matching messages are not sent to VADER or Azure. The existing request shape
+`{"message": "..."}` remains valid and opts out. Only an informed API client may set
+`{"allow_external_processing": true}`; the response structure is unchanged.
 
-## 3. Frontend (Vercel or Netlify)
+The client follows the [OpenAI Python SDK 1.59.7 Azure client API](https://github.com/openai/openai-python/tree/v1.59.7)
+and Microsoft's [Azure OpenAI chat-completions guidance](https://learn.microsoft.com/en-us/azure/foundry/openai/how-to/chatgpt).
+Its deployment/API-version URL was checked with a mocked HTTP transport; no live service was called.
+The deployment selected in Azure must serve GPT-4o; Mindsy only receives its deployment name and
+cannot independently verify the model behind it.
 
-```bash
-cd frontend
-npm ci
+The current Companion page has static copy that describes the rule-based engine and says no paid AI
+provider is needed. This task intentionally preserves that UI. It does not send the consent flag,
+so Azure remains unused by the current frontend. Do not enable Azure for end users until an
+approved UI update discloses the external processing accurately and gives users a consent choice.
+
+## Production environment
+
+Use a persistent PostgreSQL service rather than ephemeral local SQLite storage:
+
+```text
+DATABASE_URL=postgresql+psycopg://<user>:<password>@<host>:5432/<database>
+APP_ENV=production
+JWT_SECRET=<unique random secret of at least 32 characters>
+CORS_ORIGINS=https://<your-frontend-host>
+```
+
+The production backend rejects the development JWT secret, example placeholder, or a secret
+shorter than 32 characters. Keep credentials in the hosting provider's secret manager. Restrict
+CORS to exact frontend origins. The frontend's `NEXT_PUBLIC_API_URL` is public and must never
+contain a credential. `API_PROXY_TARGET` is server-side configuration.
+
+The backend creates tables at startup and applies an idempotent, additive migration for four
+nullable VADER score columns on existing `mood_entries` tables. This targeted migration preserves
+existing rows; it is not a general Alembic migration pipeline. Back up production data and verify
+the migration against a staging database before deployment.
+
+## Hosting outline
+
+- **Frontend:** Vercel is a natural Next.js host. Use `frontend` as the root directory and the
+  project's npm build command. Other providers need a compatible Next.js runtime/adapter.
+- **Backend:** deploy `backend` as a Python ASGI service using
+  `uvicorn app.main:app --host 0.0.0.0 --port $PORT` (adapt environment syntax for the host).
+- **Database:** configure PostgreSQL and the corresponding SQLAlchemy URL on the API service.
+- **Routing:** either configure the frontend to call the API origin directly and allow that origin
+  in CORS, or leave `NEXT_PUBLIC_API_URL` empty and point `API_PROXY_TARGET` at the API from the
+  Next.js server.
+
+Deploy the Next.js frontend and FastAPI backend described above. The root-level Streamlit
+`app.py`/`utils.py` files are retained prototype material and are not the supported production
+entrypoint. That prototype has a separate legacy Azure path that can send journal text externally
+without the current backend's disclosure/opt-in safeguards and can surface provider errors. Do not
+deploy it for real user data until that separate path receives a security and privacy update.
+
+No Vercel, Render, Railway, or other provider configuration is committed here. Verify each
+provider's current Next.js/Python runtime behavior before deployment.
+
+## Regression and post-deploy checklist
+
+Automated tests use mocks for Azure, and do not require a key or make paid requests:
+
+```powershell
+Set-Location backend
+.\.venv\Scripts\python.exe -m pytest -q
+```
+
+Frontend checks:
+
+```powershell
+Set-Location frontend
+npm run lint
+npm run typecheck
 npm run build
 ```
 
-Vercel: import the repository, set **Root Directory** to `frontend`, framework preset **Next.js**.
-Netlify: base directory `frontend`, build command `npm run build`, publish `.next` via the Next
-runtime.
+After deployment, verify:
 
-Environment variables:
+1. `/api/health` returns an API liveness response.
+2. Signup/login, check-in creation, garden stability, journal CRUD, and gratitude CRUD work.
+3. Two accounts cannot access each other's records.
+4. The Companion works with Azure disabled and returns the expected crisis response.
+5. If Azure was intentionally configured, a non-crisis request succeeds; provider failures still
+   return the rule-based response. Verify with a controlled deployment and do not expose real
+   reflections in logs.
+6. Browser requests target the configured API, the frontend has no console errors, and mobile
+   layouts remain usable.
+7. Review database backups, rate limits, privacy/consent, and verified region-specific crisis
+   resources before public use.
 
-| Variable | Value |
-| --- | --- |
-| `NEXT_PUBLIC_API_URL` | `https://your-api-host.example.com` |
-| `API_PROXY_TARGET` | optional; only used when `NEXT_PUBLIC_API_URL` is empty |
+## Remaining production work
 
-`NEXT_PUBLIC_*` values are baked in at build time — redeploy after changing them.
-
-Alternative single-origin setup: leave `NEXT_PUBLIC_API_URL` empty and set
-`API_PROXY_TARGET=https://your-api-host.example.com`. The browser then calls the frontend origin
-and Next proxies `/api/*`; CORS is not involved. Make sure your platform allows the proxy to make
-outbound requests.
-
----
-
-## 4. Post-deploy checks
-
-1. `GET https://your-api/api/health` returns ok.
-2. Signup creates an account; the network tab shows `201` and no password in the response.
-3. Reload the page — the session persists.
-4. Complete a check-in and confirm `POST /api/entries` returns `201`.
-5. Open the garden: exactly one plant; refresh: same plant, no duplicate.
-6. Sign out, sign in again: check-ins, journal and gratitude are still there.
-7. Two accounts cannot see each other's data.
-8. `/api/companion` replies, and crisis phrasing returns the safety copy.
-9. Browser console has no errors; all API requests use the configured base URL (no `localhost`).
-10. Mobile widths: navigation wraps, the garden stays inside its container, flowers are tappable.
-
----
-
-## 5. Hardening checklist
-
-- [ ] Strong random `JWT_SECRET`, rotated if ever exposed.
-- [ ] HTTPS only; HSTS at the edge.
-- [ ] `CORS_ORIGINS` restricted to real frontend origins.
-- [ ] Rate limit `/api/auth/*` and `/api/companion`.
-- [ ] Move the access token to a short-lived httpOnly cookie + CSRF protection.
-- [ ] Add security headers (CSP, `X-Content-Type-Options`, `Referrer-Policy`).
-- [ ] Automated database backups.
-- [ ] Alembic migrations in the deploy pipeline.
-- [ ] Region-specific, verified crisis resources on the Support page.
-- [ ] Error monitoring (Sentry or similar) on both services.
-
----
-
-## 6. Not production-ready as-is
-
-Be explicit with reviewers: this repository is a portfolio-quality implementation, not a clinical
-product. It has no clinical review, no GDPR/data-deletion workflow, no email verification, no
-password reset, and no audit logging. Those are deliberate scope boundaries, not oversights.
+The automated integration does not make Mindsy a clinical product or prove regulatory compliance.
+Before real users, review account deletion, email verification/password recovery, rate limiting,
+security headers, audit/operational monitoring, database migrations, data-retention policies, and
+crisis resources. The dependency audit also found unresolved Starlette/pytest and Next.js/PostCSS
+advisories; see [TECH_STACK_AUDIT.md](TECH_STACK_AUDIT.md) and resolve or formally accept them
+before production. The current localStorage token approach is convenient for a demo but is not an
+httpOnly-cookie design.

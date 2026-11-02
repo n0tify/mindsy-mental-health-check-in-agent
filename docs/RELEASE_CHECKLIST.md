@@ -1,53 +1,75 @@
-# Mindsy release checklist
+# Mindsy integration and regression checklist
 
-**Run date:** 2026-11-03
-**Result:** the source release commit is on GitHub `main`; external deployment is not complete.
+## Scope and preservation
 
-## Workspace and preservation
+- [x] Added VADER as a local, non-clinical sentiment service.
+- [x] Added Azure OpenAI behind an explicit backend-only opt-in, complete-configuration check, and
+  per-request consent flag that defaults to false.
+- [x] Kept the existing deterministic Companion, crisis routing, authentication, and frontend
+  unchanged; check-in score columns are additive and nullable.
+- [x] Added no frontend packages, pages, styling, or environment variables.
+- [x] Did not add credentials, perform a live Azure request, or deploy externally.
 
-- [x] Created a source-only recovery archive before audit edits (`mindsy-preaudit-checkpoint.zip`
-  in the local temporary directory).
-- [x] Kept the existing route/component design; no visual or layout changes were made.
-- [x] The original workspace had no `.git`; the release tree was based on a fresh clone of the
-  target's existing `main` at `0ae297cc3ae7dc3b828cbcc27e4a94a1ed367108`.
-- [x] Preserved the original Streamlit prototype and remote history while adding the redesigned
-  frontend, backend, and audit/deployment documentation.
-- [x] Reviewed 90 staged paths. No `.env`, `.env.local`, database, dependency directory, build
-  output, cache, or credential-shaped key was staged.
+## Baseline before implementation
 
-## Checks run
+| Check | Baseline result |
+| --- | --- |
+| Backend test suite | 49 passed. |
+| Frontend lint | Passed with no ESLint warnings/errors; Next.js reports that `next lint` is deprecated. |
+| Frontend TypeScript check | Passed. |
+| Git worktree | Clean at `af87f65` before changes. |
+
+## Verification after implementation
 
 | Check | Result |
 | --- | --- |
-| Frontend lockfile install (`npm ci`) | Passed against the final lockfile. npm reports an engine warning for `eslint-visitor-keys` on the installed Node 20.11.1 and 20 audit advisories. |
-| TypeScript (`npm run typecheck`) | Passed. |
-| ESLint (`npm run lint`) | Passed with no warnings/errors. `next lint` reports deprecation in Next.js 15. |
-| Frontend production build (`npm run build`) | Passed; all 14 app routes were built and static pages generated. |
-| Backend tests (`pytest -q`) | 49 passed, including production-secret validation. |
-| Python compilation and package consistency | `compileall` and `pip check` passed after the config changes and PostgreSQL driver install. |
-| Local `.env` loading / production secret guard | Confirmed the backend loads the generated local secret; unit and runtime checks reject unsafe production secrets. |
-| API health / proxy | Backend `/api/health` and frontend `/api/health` proxy both returned HTTP 200 after final restart. |
-| Database | SQLite development path exercised by the tests. A production PostgreSQL server was not available for an integration test. |
-| Secret scan | No credential-shaped API keys were found in current checked source. The known development JWT default is explicitly guarded in production. Remote Git history was not scanned. |
-| npm audit | 19 moderate and 1 high advisories. The high issue is nested PostCSS under Next.js 15.5.28; automatic remediation required a breaking Next.js 16 upgrade and was not applied. |
+| Backend regression suite | **79 passed**, including check-in persistence, consent/configuration gating, fallback, and legacy-database migration tests. |
+| Dependency consistency | `pip check` reports no broken requirements in the backend environment. |
+| Dependency vulnerability audit | PyJWT and python-dotenv were updated to patched non-major pins. `pip-audit` still reports 16 advisories across Starlette 0.41.3 and pytest 8.3.4; `npm audit` reports 20 total findings (19 moderate, 1 high), including 2 production-tree findings. See deployment blockers below. |
+| Frontend lint | Passed; no warnings or errors. The existing Next.js deprecation notice remains. |
+| Frontend TypeScript check | Passed. |
+| Frontend production build | Passed in a temporary isolated frontend copy so the active local dev server's `.next` directory was not disturbed. The copy was removed after the build. |
+| Local API health | `GET http://127.0.0.1:8011/api/health` returned HTTP 200. |
+| Local Companion without Azure | `POST /api/companion` returned HTTP 200 with a non-crisis, rule-based response. |
+| Local frontend | `http://localhost:3000/` returned HTTP 200. |
+| SDK wiring | OpenAI Python SDK 1.59.7 `AsyncAzureOpenAI` was exercised with `httpx.MockTransport`; the response was parsed and the request used the configured deployment and API version. No network request was made. |
+| Azure success/failure paths | Automated tests use mocked SDK clients; timeout, connection, authentication, rate-limit, missing-deployment, malformed/empty response, and fallback paths are covered. |
+| Azure runtime configuration | In the checked local runtime, Azure is disabled and required settings are incomplete. No credential values were printed or recorded. |
+| Azure opt-in gate | Requests without enabled/complete configuration or `allow_external_processing=true` use the rule-based path before VADER/Azure; the current UI remains opted out. |
+| API compatibility | Existing check-in fields remain, with four optional sentiment score fields added. The existing Companion request remains valid and opts out; the optional consent field defaults to false. The Companion response structure is unchanged. |
+| Check-in migration | Idempotent startup migration adds four nullable `FLOAT` columns without rewriting existing rows; tested on a legacy SQLite table. |
+| Active local database migration | Applied to `backend/mindsy.db` only after a timestamped backup passed SQLite integrity and row-count checks. Integrity remains `ok`; users, check-ins, journals, and gratitude counts remained zero; all four new columns are nullable. The backup is ignored and not staged. |
+| UI preservation | No frontend source/configuration files are changed. |
+| Formatting/diff check | `git diff --check` passed after the final backend and documentation changes. |
 
-## Remaining release blockers / external setup
+No live Azure inference, production PostgreSQL integration, or external deployment was performed.
+Automated tests do not require Azure credentials and make no paid requests.
 
-- [x] Rechecked backend health, frontend API proxy, and all 13 direct frontend routes after the
-  final service restart; every response was HTTP 200.
-- [x] Checked the home page at 390px and 1440px viewport widths; neither had horizontal overflow.
-- [ ] Decide on a compatible remediation for the frontend dependency advisories; do not use
-  `npm audit fix --force` without a tested Next.js major-version migration.
-- [ ] The current redesigned workspace does not implement VADER, Azure GPT-4o, text-to-speech, or
-  optional calming audio. The remote Streamlit prototype contains partial implementations, but
-  credentials/live operation and some dependencies are unverified. Porting these into the current
-  UI would change behavior and visible controls, so it was not done under the preservation rules.
-- [ ] Provide production Azure credentials only if the integrations are intentionally ported; never
-  put them in the frontend or commit them.
-- [ ] Configure `APP_ENV=production`, a unique JWT secret of at least 32 characters,
-  `DATABASE_URL`, `CORS_ORIGINS`, and frontend production API URL on hosting.
-- [ ] Provision a persistent PostgreSQL database and test its connection/backup policy.
-- [ ] A real hosted deployment still requires a provider account/authorization and production
-  settings. No Vercel, Render, Railway, or GitHub CLI credentials were available in this session.
-- [ ] Verify hosted routes, desktop/mobile behavior, user data isolation, crisis response, and
-  production logs after deployment.
+## Deployment requirements not yet verified
+
+- [ ] Provision and validate an Azure OpenAI resource and a chat-completions-capable model
+  deployment, if the optional service is desired.
+- [ ] Configure `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`,
+  `AZURE_OPENAI_DEPLOYMENT`, `AZURE_OPENAI_API_VERSION`, and
+  `AZURE_OPENAI_ENABLED=true` only in the backend's secret manager/environment.
+- [ ] Review Azure data handling and user-consent requirements before sending reflections
+  externally.
+- [ ] Before enabling Azure for end users, separately update the static Companion disclosure to
+  explain that messages may be processed by the configured external Azure service and obtain
+  informed user consent. The frozen frontend currently cannot opt in.
+- [ ] Provision persistent PostgreSQL, production secrets, restricted CORS, and backups; test the
+  targeted startup migration against a production-like staging database.
+- [ ] Deploy the frontend and backend to chosen providers and verify the hosted URL, API routing,
+  authentication, data isolation, crisis response, and mobile behavior.
+- [ ] Run a controlled live Azure smoke test only after explicit configuration and approval.
+- [ ] Resolve or formally accept the remaining dependency advisories before production: Starlette
+  and pytest backend findings; Next.js/PostCSS frontend findings. The compatible remediation path
+  needs framework/development-tool upgrades and has not been validated.
+
+## Known limitations
+
+- The existing phrase-based crisis router is not a complete risk detector or substitute for human
+  assessment. The optional model prompt is not a safety guarantee.
+- Account tokens remain in browser `localStorage`.
+- There is no committed hosting manifest or external deployment record.
+- No regulatory-compliance claim has been assessed or made.
