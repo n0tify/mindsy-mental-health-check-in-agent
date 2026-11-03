@@ -1,383 +1,350 @@
 # Mindsy 🌷
 
-### A softer place to check in.
-
-**Feel what you feel. Put it into words. Watch it grow.**
-
-Mindsy is a visual mental-wellness check-in and reflection application built around a simple idea: emotional well-being deserves a space that feels gentle, personal, and free from judgement.
-
-Through guided emotional check-ins, a living botanical garden, personal journaling, mood insights, and small restorative experiences, Mindsy turns everyday reflection into something tangible.
-
-It is not about chasing perfect days. It is about making space for the days you actually have.
-
-![Mindsy — Home](docs/screenshots/01-home.png)
+<p align="center">
+  <strong>A softer place to check in.</strong><br />
+  <em>Feel what you feel. Put it into words. Watch it grow.</em>
+</p>
 
 <p align="center">
-  **A softer place to understand your own emotional landscape.**
+  A thoughtful space for emotional check-ins, personal reflection, and a garden that grows with you.
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/8d822e49-f317-4487-be51-0057a0ca384c" alt="Mindsy home page, featuring the Living Garden" width="100%" />
+</p>
+
+<p align="center">
+  <a href="#-the-thinking-behind-mindsy">The idea</a> ·
+  <a href="#-explore-mindsy">Features</a> ·
+  <a href="#-the-living-garden">Living Garden</a> ·
+  <a href="#-technology--architecture">Architecture</a> ·
+  <a href="#-getting-started">Get started</a> ·
+  <a href="#-privacy--safety">Privacy</a>
 </p>
 
 ---
 
-## Contents
+## 🌷 The thinking behind Mindsy
 
-- [The idea behind Mindsy](#the-idea-behind-mindsy)
-- [What makes Mindsy different](#what-makes-mindsy-different)
-- [Explore the experience](#explore-the-experience)
-- [The Living Garden](#the-living-garden)
-- [Insights without judgement](#insights-without-judgement)
-- [Technology and architecture](#technology-and-architecture)
-- [How Mindsy works](#how-mindsy-works)
-- [Privacy and security](#privacy-and-security)
-- [Project structure](#project-structure)
-- [Getting started](#getting-started)
-- [Configuration](#configuration)
-- [Testing](#testing)
-- [Deployment status](#deployment-status)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [Licence](#licence)
+Emotions do not arrive in neat categories. Some days feel light, some feel difficult, and some are a mixture of things that are hard to explain.
 
----
+Yet many digital wellness experiences reduce emotional reflection to scores, streaks, and numbers.
 
-## The idea behind Mindsy
+**Mindsy takes a gentler approach.**
 
-Emotions are not linear. Some days feel light. Some feel complicated. Some are a mixture that does not fit neatly into one word.
+It gives people a place to acknowledge what they feel, record what is on their mind, and revisit their experiences through a visual garden.
 
-Yet many digital wellness experiences reduce those moments to scores, streaks, or rigid productivity metrics.
+Rather than asking whether a day was good or bad, Mindsy makes room for the day as it actually happened.
 
-Mindsy takes a different approach.
+### Built around three ideas
 
-It gives users a calm space to:
-
-- Acknowledge what they are feeling.
-- Reflect without pressure.
-- Recognise emotional patterns over time.
-- Keep a personal record of their experiences.
-- Find small, approachable ways to pause and reset.
-
-The experience is intentionally built around three principles:
-
-| Principle | What it means |
+| Principle | How Mindsy approaches it |
 |---|---|
-| **Reflection over measurement** | Emotional experiences are recorded, not graded. |
-| **Personal history over performance** | Check-ins become a visual record rather than a competition. |
-| **Gentleness over judgement** | The application describes patterns without pretending to diagnose the person behind them. |
+| **Reflection, not measurement** | Record feelings without grading them. |
+| **Personal history, not performance** | Let each check-in become part of a visual record. |
+| **Awareness, not judgement** | Describe patterns without turning them into diagnoses. |
 
-## What makes Mindsy different
+Mindsy is a personal wellness journal and reflection tool. It is not a medical service and does not diagnose or treat mental-health conditions.
 
-### 01. A check-in becomes something you can see
+## ✨ Explore Mindsy
 
-Most mood trackers leave you with a list or a graph.
+Mindsy brings together structured emotional reflection and small, approachable wellbeing experiences.
 
-Mindsy gives every check-in a place in your Living Garden. Each plant represents an individual moment, creating a visual relationship between emotional history and personal reflection.
+### 01. Emotional check-ins
 
-### 02. Start without an account
+**Five small steps. No scores. No judgement.**
 
-Mindsy follows a guest-first approach.
+The guided check-in helps users capture an honest snapshot of how they feel.
 
-Users can begin exploring the application without being forced through registration. An account provides a way to preserve their history beyond the current browser profile, with a guest-history transfer experience.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/09da8cfa-339c-4901-b29b-86cfe0f3bdf1" alt="Mindsy's five-step emotional check-in interface" width="100%" />
+</p>
 
-### 03. Patterns, not verdicts
-
-Insights are intended to help users notice what their own check-ins contain.
-
-Mindsy does not turn those observations into diagnoses or clinical labels.
-
-### 04. More than a mood tracker
-
-Check-ins sit alongside journaling, gratitude, breathing exercises, reflection prompts, and companion support.
-
-The result is a collection of small experiences rather than one rigid daily task.
-
----
-
-## Explore the experience
-
-### 01 — Begin with how you feel
-
-Mindsy's emotional check-in is organised into five steps.
-
-![Mindsy — Emotional check-in](docs/screenshots/06-check-in.png)
-
-| Step | Experience |
+| Step | What happens |
 |---|---|
-| **Feelings** | Select multiple emotions that reflect the moment. |
-| **Energy** | Record your available energy. |
-| **Reflection** | Add an optional personal note. |
-| **Tags** | Give the experience additional context. |
-| **Plant** | See the moment become part of your garden. |
+| **Feelings** | Choose as many emotions as fit the moment. |
+| **Energy** | Record the energy available to you. |
+| **Reflection** | Write a little or a lot, in your own words. |
+| **Tags** | Add context to the check-in. |
+| **Plant** | Give the experience a place in the Living Garden. |
 
-There are no scores to achieve and no requirement to write a particular amount.
+The first selected feeling influences the flower's visual identity. Multiple feelings can be represented together.
 
-### 02 — Give the experience a place to grow
+### 02. The Living Garden
 
-![Mindsy — Living Garden preview](docs/screenshots/03-living-garden-feature.png)
+**Your feelings, growing.**
 
-Every check-in becomes part of a visual botanical space.
+Every check-in becomes a plant. Its visual identity comes from the emotional information recorded, connecting a moment of reflection with a place in the garden.
 
-Plants are derived from the emotional information recorded in the check-in. Their positions and identities are designed to remain stable, so revisiting the garden does not randomly rearrange personal history.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/23aeb09d-2c20-4def-b55a-7ac3e8c508ce" alt="Mindsy's signature Living Garden feature" width="100%" />
+</p>
 
-### 03 — Notice what your history contains
-
-![Mindsy — Insights](docs/screenshots/09-insights.png)
-
-The Insights experience brings together summaries of recorded check-ins, including mood distribution, energy patterns, and activity over time.
-
-The purpose is awareness, not judgement.
-
-### 04 — Make room for longer thoughts
-
-![Mindsy — Journal](docs/screenshots/11-journal.png)
-
-The journal provides a separate space for longer reflections, with entry titles, optional feeling labels, search, and editing controls.
-
-### 05 — Keep the experience personal
-
-![Mindsy — Guest-first experience](docs/screenshots/05-guest-first.png)
-
-Guest mode makes it possible to begin immediately. Registration is available when the user wants a longer-term account and a way to transfer their guest history.
-
----
-
-## The Living Garden
-
-### Your feelings, growing.
-
-The Living Garden is Mindsy's signature feature and its central visual metaphor.
-
-Rather than treating emotional history as rows in a table, the garden gives each check-in a visual identity.
-
-![Mindsy — The Living Garden](docs/screenshots/08-living-garden.png)
-
-Its design follows a few simple rules:
+The garden follows a few distinctive rules:
 
 - Each check-in corresponds to a plant.
-- The dominant feeling influences the plant's visual identity.
-- New check-ins begin as seedlings.
-- Plants develop as time passes.
-- Multiple feelings can produce a mixed blossom.
-- A plant can be selected to revisit its source check-in.
-- Plant placement and identity are designed to remain stable.
+- The dominant feeling influences the plant species.
+- New plants begin as seedlings and develop over time.
+- Three or more feelings can form a mixed blossom.
+- Selecting a plant lets the user revisit its source check-in.
+- Plant identity and placement are designed to remain stable across refreshes.
 
-The garden is not a reward system. It does not decide whether a person has had a good or bad day.
+The garden is not a reward system. It does not decide whether someone has had a good or bad day.
 
-It simply gives their experiences somewhere to belong.
+It simply gives personal experiences somewhere to belong.
 
-![Mindsy — Garden feature](docs/screenshots/07-garden-overview.png)
+### 03. Insights and Mood Weather
 
----
+**Patterns, not verdicts.**
 
-## Insights without judgement
+Mindsy turns check-in history into descriptive summaries that help users notice what their own records contain.
 
-### Patterns, not verdicts.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/a8b3a794-3150-4b0c-9658-ceb9bb370cac" alt="Mindsy Insights dashboard" width="100%" />
+</p>
 
-Mindsy's Insights experience focuses on descriptive summaries of information users have entered.
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/cf5f2c14-71f5-4b25-8945-445ca6ce7121" alt="Mindsy mood distribution, energy patterns, and recent activity" width="100%" />
+</p>
 
-![Mindsy — Mood and energy insights](docs/screenshots/10-insights-details.png)
-
-The visible experience includes:
+The interface presents:
 
 - Check-in summaries.
 - Mood distribution.
 - Energy distribution.
-- Recent activity across a fourteen-day window.
 - Frequently recorded feelings.
+- Recent activity over a fourteen-day window.
 - Current streak information.
 
-These are descriptive observations derived from check-in history, not medical assessments.
+These summaries are descriptive, not diagnostic. Mindsy does not turn emotional patterns into clinical conclusions.
 
-Empty days are not failures. Different emotions are not performance indicators.
+### 04. Journal
+
+**A place for the longer thoughts.**
+
+Check-ins capture a moment. The journal holds the rest: paragraphs, half-formed thoughts, and things worth coming back to.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/64cd2d3d-843e-4ff6-9bc8-7842a1df7a18" alt="Mindsy journal with entry creation and existing reflections" width="100%" />
+</p>
+
+The journal interface includes:
+
+- Entry titles.
+- Optional feeling labels.
+- Longer written reflections.
+- Search across entries.
+- Editing and deletion controls.
+
+### 05. Guest-first experience
+
+**Begin before you are ready to create an account.**
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/1f587b0b-f9bb-4c17-93cf-023b936d8c61" alt="Mindsy guest-first experience and privacy messaging" width="100%" />
+</p>
+
+Mindsy allows users to begin exploring without mandatory registration.
+
+Guest activity is kept in the current browser profile. An account provides a way to keep personal history beyond that browser, with a guest-history transfer experience.
+
+Guest mode should not be treated as a backup. Clearing browser data or changing browser profiles may make locally stored guest history unavailable.
 
 ---
 
-## Everything else in Mindsy
+## 🌼 The Living Garden
 
-Mindsy brings together several complementary experiences.
+### More than a mood chart
 
-![Mindsy — Additional features](docs/screenshots/04-feature-cards.png)
+The Living Garden is Mindsy's signature experience.
 
-| Experience | Description |
+Instead of presenting emotional history only as rows, counts, or charts, it gives each check-in a visual identity.
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/ffc7edf1-1fc3-448c-ac71-7b82ce80f470" alt="Mindsy Living Garden with flowers representing recorded feelings" width="100%" />
+</p>
+
+A happy moment might become a sunflower. A calm one might become lavender. A check-in containing several feelings can grow into a mixed blossom.
+
+Every plant is connected to the check-in that created it, so the garden can also become a way to revisit personal reflections.
+
+**The idea is simple: your experiences do not need to be ranked to be remembered.**
+
+---
+
+## 🌸 Everything else in Mindsy
+
+The wider experience includes several small tools for different kinds of reflection and care.
+
+| Experience | What it offers |
 |---|---|
-| **Journal** | A private space for longer thoughts, with search and editing. |
 | **Joy Deck** | Small, practical prompts for moments when you need somewhere to begin. |
 | **Breathe** | A guided breathing experience with reduced-motion considerations. |
 | **Mood Weather** | A descriptive view of the emotional atmosphere reflected in recent check-ins. |
-| **Gratitude Wall** | A collection of small positive moments on revisit-able notes. |
+| **Gratitude Wall** | Small good things collected on notes that can be revisited. |
 | **Companion** | A supportive reflection experience with transparent limitations and no claim to provide diagnosis. |
 
+These experiences complement the main check-in and journaling flow rather than turning wellness into another task list.
+
 ---
 
-## Technology and architecture
+## 🧩 Technology & architecture
 
-Mindsy is structured as a full-stack web application, separating its user-facing experience from its backend API and persistence layer.
+Mindsy is organised as a full-stack web application, with a separate frontend, backend API, and persistence layer.
 
-### Technology stack
+### Core technology stack
 
-The following technologies are identified in the project's existing technical documentation. Exact versions should be confirmed against the committed dependency manifests and lockfiles.
-
-| Layer | Technology | Responsibility |
+| Layer | Technology | Role |
 |---|---|---|
-| Frontend framework | **Next.js 15** | Application routing and frontend delivery |
-| UI library | **React 19** | Component-based interface |
-| Language | **TypeScript** | Frontend type safety |
-| Styling | **Tailwind CSS** | Utility-based styling |
-| Motion | **Framer Motion** | Interface animations and transitions |
-| Icons | **Lucide React** | Interface iconography |
-| Backend framework | **FastAPI** | Backend API and request handling |
-| Backend language | **Python 3.11+** | Application and service logic |
-| ORM | **SQLAlchemy 2** | Database models and persistence operations |
-| Validation | **Pydantic 2** | Request and response validation |
-| API server | **Uvicorn** | ASGI application serving |
-| Authentication | **JWT / PyJWT** | Token-based authentication |
-| Local database | **SQLite** | Local development persistence |
-| Sentiment analysis | **VADER** | Local sentiment scoring, where enabled |
-| Optional language integration | **Azure OpenAI** | Opt-in companion response capability, when configured |
-| Testing | **pytest** | Backend testing |
-| Development | **Git, npm, Python virtual environments** | Source control and development workflow |
+| Frontend framework | **Next.js** | Web application and routing |
+| UI library | **React** | Component-based interface |
+| Frontend language | **TypeScript** | Typed frontend development |
+| Backend language | **Python** | Backend application logic |
+| API framework | **FastAPI** | API endpoints and request handling |
+| ORM | **SQLAlchemy** | Database interaction and persistence |
+| Local database | **SQLite** | Local development storage |
+| Testing | **pytest** | Backend test framework |
+| Source control | **Git** | Version control |
 
-Optional integrations are not required for the core local application unless the actual configuration says otherwise.
+The exact dependency versions and additional UI libraries are defined by the repository's package manifests and dependency files. Those files should be treated as authoritative rather than relying on version numbers copied into documentation.
 
-### High-level architecture
+### Application architecture
 
 ```mermaid
 flowchart TD
-    U["User / Browser"] --> FE["Next.js + React Frontend"]
+    USER["User / Browser"]
 
-    FE --> UI["Check-ins · Garden · Insights"]
-    FE --> TOOLS["Journal · Gratitude · Joy Deck · Breathe"]
-    FE --> API["FastAPI Backend"]
+    USER --> FRONTEND["Next.js + React Frontend"]
+
+    FRONTEND --> CHECKIN["Emotional Check-ins"]
+    FRONTEND --> GARDEN["Living Garden"]
+    FRONTEND --> INSIGHTS["Insights & Mood Weather"]
+    FRONTEND --> JOURNAL["Journal & Wellbeing Tools"]
+
+    FRONTEND --> API["FastAPI Backend"]
 
     API --> AUTH["Authentication & Authorisation"]
-    API --> SERVICES["Application Services"]
-    API --> DB["SQLAlchemy Data Layer"]
+    API --> LOGIC["Application Services"]
+    API --> DATA["SQLAlchemy Data Layer"]
 
-    SERVICES --> SENT["Local Sentiment Analysis"]
-    SERVICES --> COMP["Companion Logic"]
-
-    COMP -. "Optional, consent-based external processing" .-> AI["Azure OpenAI, when configured"]
-
-    DB --> SQLITE["SQLite · Local Development"]
+    DATA --> SQLITE["SQLite - Local Development"]
 ```
 
-Production storage and hosting are deployment-specific. A production database adapter must be implemented and verified for the selected host before it is described as operational.
+### Architectural responsibilities
 
-### Architectural considerations
+**Frontend**
+- Presents the Mindsy experience.
+- Handles navigation and user interaction.
+- Displays check-ins, garden, insights, journal, and supporting tools.
+- Communicates with the backend API.
 
-Mindsy's architecture separates:
+**Backend**
+- Handles application API requests.
+- Provides account and authentication operations.
+- Applies application and data-access logic.
+- Coordinates persistence through the database layer.
 
-- Presentation and navigation.
-- API communication.
-- Authentication and user authorisation.
-- Application-specific services.
-- Database models and persistence.
-- Optional external integrations.
+**Persistence**
+- Uses SQLAlchemy for database interaction.
+- Uses SQLite for local development.
+- Requires a separately verified production database integration before deployment can be described as production-ready.
 
-This separation makes it possible to develop the frontend and backend independently while maintaining defined API contracts.
+The separation allows the interface, API, and persistence layer to be developed and tested independently.
 
 ---
 
-## How Mindsy works
-
-The user journey is designed to be straightforward.
+## 🔄 How Mindsy works
 
 ```mermaid
 flowchart TD
-    A["Open Mindsy"] --> B{"Guest or account?"}
-    B -->|"Guest"| C["Start reflecting"]
-    B -->|"Registered user"| D["Authenticate"]
-    C --> E["Complete emotional check-in"]
+    A["Open Mindsy"] --> B{"Choose how to begin"}
+    B -->|"Guest"| C["Start in Guest Mode"]
+    B -->|"Account"| D["Sign in"]
+
+    C --> E["Complete a Check-in"]
     D --> E
-    E --> F["Record feelings, energy and reflection"]
-    F --> G["Save check-in"]
-    G --> H["Update Living Garden"]
-    G --> I["Update Insights"]
-    G --> J["Revisit personal history"]
-    C --> K["Optionally create account"]
-    K --> L["Guest-history transfer flow"]
+
+    E --> F["Select Feelings"]
+    F --> G["Record Energy"]
+    G --> H["Write a Reflection"]
+    H --> I["Add Tags"]
+    I --> J["Create a Plant"]
+
+    J --> K["Living Garden"]
+    J --> L["Insights"]
+
+    K --> M["Revisit the Source Check-in"]
+    L --> N["Notice Descriptive Patterns"]
+
+    C --> O["Optionally Create an Account"]
+    O --> P["Guest-history Transfer Flow"]
 ```
 
-The purpose is to make reflection accessible immediately, while providing an account pathway for users who want to preserve their history beyond their current browser.
+The central flow is designed to make reflection accessible immediately, while giving users an account pathway when they want to preserve their history beyond the current browser.
 
 ---
 
-## Privacy and security
+## 🔐 Privacy & safety
 
 Mental-wellness information deserves careful handling.
 
-Mindsy's security and privacy design includes mechanisms for authentication, user-specific access, and environment-based configuration.
+Mindsy's account and application architecture includes authentication and user-specific data handling. The exact security guarantees depend on the current backend implementation and production configuration.
 
-The implementation should be evaluated against the actual backend source code before relying on any particular security guarantee.
+Important implementation areas include:
 
-The documented security considerations include:
+- Server-side password handling.
+- Authentication and token validation.
+- Session expiry and revocation.
+- User ownership checks for protected records.
+- Input validation.
+- Environment-based secret configuration.
+- Restricting production cross-origin requests.
+- Keeping private backend credentials out of frontend bundles.
 
-- Password hashing rather than plaintext password storage.
-- Token-based authentication.
-- Access-token validation and expiry.
-- Server-side token revocation where implemented.
-- User ownership checks for protected resources.
-- Validated API request models.
-- Environment-based configuration of sensitive settings.
-- Restricted production CORS origins.
-- Separation of private backend credentials from frontend code.
+The password-hashing algorithm and legacy-hash compatibility must be confirmed against the current backend security service. The sign-up interface alone is not sufficient evidence for a specific algorithm.
 
-### Optional external processing
+### Guest data
 
-Mindsy's Companion has an optional Azure OpenAI integration.
+Guest activity is associated with the current browser profile. Users should understand that browser data clearing or profile changes may affect access to guest history.
 
-External processing should only be enabled through the application's explicit consent mechanism and applicable configuration. The local reflection experience should not be described as requiring an external model unless the actual implementation establishes that dependency.
+### Optional external services
 
-### Important limitations
+Only describe external AI or language-model processing as enabled when the relevant code, configuration, and user-consent flow are present and verified. Do not assume that the core reflection experience requires an external AI provider.
 
-Mindsy is a personal wellness and reflection application.
+### Important limitation
 
-It is not a diagnostic tool, a medical device, a crisis-response service, or a replacement for professional mental-health support.
-
-Do not use it as a substitute for qualified care.
+Mindsy is a wellness journal and reflection application. It is not a medical device, diagnostic system, crisis-response service, or replacement for professional mental-health support.
 
 ---
 
-## Project structure
+## 📁 Project structure
 
-The following is an abbreviated view of the application's architecture. The repository itself is authoritative for the complete structure.
+The following is an abbreviated view of the repository. The actual checked-out source tree is authoritative.
 
 ```text
 mindsy/
 │
 ├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── checkin/
-│   │   │   ├── garden/
-│   │   │   ├── insights/
-│   │   │   ├── journal/
-│   │   │   ├── login/
-│   │   │   ├── signup/
-│   │   │   └── ...
-│   │   ├── components/
-│   │   ├── lib/
-│   │   └── styles/
-│   │
+│   ├── app/
+│   ├── components/
 │   ├── package.json
-│   └── next.config.js
+│   └── ...
 │
 ├── backend/
 │   ├── app/
 │   │   ├── main.py
 │   │   ├── config.py
 │   │   ├── database.py
-│   │   ├── deps.py
 │   │   ├── models/
 │   │   ├── routes/
 │   │   ├── schemas/
 │   │   └── services/
 │   │
 │   ├── tests/
-│   └── requirements.txt
+│   └── ...
 │
 ├── docs/
-│   └── screenshots/
 │
-├── .gitignore
 ├── CHANGELOG.md
 ├── LICENSE
 └── README.md
@@ -385,16 +352,16 @@ mindsy/
 
 ---
 
-## Getting started
+## 🚀 Getting started
 
 ### Prerequisites
 
 - Git.
-- Node.js compatible with the frontend's declared requirements.
+- Node.js compatible with the frontend's declared version.
 - npm.
-- Python 3.11 or the version supported by the backend dependencies.
+- Python compatible with the backend dependencies.
 
-Check the project's package manifests and dependency files for exact versions before installation.
+Check the committed dependency files for exact versions before installing.
 
 ### 1. Clone the repository
 
@@ -420,13 +387,13 @@ py -3.11 -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-Start the API server:
+Start the backend:
 
 ```powershell
 python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8010
 ```
 
-When enabled, backend API documentation is available at:
+When enabled, the API documentation is available at:
 
 `http://127.0.0.1:8010/docs`
 
@@ -446,137 +413,136 @@ Open:
 
 `http://localhost:3000`
 
-### 4. Run both services
+### 4. Local services
 
-The local development environment uses separate processes:
-
-| Service | Local address |
+| Service | Address |
 |---|---|
 | Frontend | `http://localhost:3000` |
 | Backend | `http://127.0.0.1:8010` |
 | API documentation | `http://127.0.0.1:8010/docs` |
 
-Frontend and backend configuration must point to one another correctly.
+The frontend API configuration must point to the correct backend address.
 
 ### Environment configuration
 
-Use the actual environment-variable names defined by the backend configuration and frontend application.
+Use the environment-variable names defined by the actual frontend and backend configuration.
 
-Keep private settings server-side.
+Keep private settings on the server side.
 
 Never commit:
 
+- Passwords.
 - JWT signing secrets.
 - API keys.
-- Passwords.
 - Personal database files.
-- Private environment files.
+- Private `.env` files.
 - Production credentials.
 
-Use example values only in committed environment templates.
+Use example values in committed environment templates and a hosting provider's secret manager for production credentials.
 
 ---
 
-## Testing and quality
+## 🧪 Testing
 
-Mindsy's tests and quality checks should be run from the relevant project directories.
+Run the tests and quality checks defined by the project.
 
-### Backend
+### Backend tests
+
+From the backend directory:
 
 ```powershell
-cd backend
-
 python -m pytest tests/ -v
 ```
 
-### Frontend
+### Frontend checks
 
-Use the scripts declared in `frontend/package.json`, including the configured lint, type-check and production-build commands.
+Use the scripts declared in `frontend/package.json` for linting, type checking, and production builds.
 
-### What should be verified
-
-A successful build is only one part of application verification.
-
-The important user journeys include:
+### Important application journeys to verify
 
 - Guest access.
-- Check-in creation.
+- Emotional check-in creation.
 - Garden updates.
 - Insights generation.
-- Journal creation and editing.
-- Registration.
-- Login and logout.
+- Journal creation, search, editing, and deletion.
+- Registration and login.
+- Logout and session handling.
 - Guest-history transfer.
 - User-specific data access.
-- Data persistence after reload.
+- Persistence after reload and restart.
 
-Do not claim production readiness or complete test coverage without actual test evidence.
+A successful build or health endpoint alone does not establish that the complete application works.
 
 ---
 
-## Deployment status
+## ☁️ Deployment status
 
-Mindsy has a Next.js frontend and a FastAPI backend. Its local development database is SQLite.
+Mindsy has a Next.js frontend and a FastAPI backend, with SQLite used for local development.
 
-The intended production hosting arrangement is subject to runtime and database compatibility verification.
+Production hosting and storage must be evaluated against the actual runtime and database integration.
 
-In particular, Cloudflare D1 must not be described as a conventional SQLAlchemy SQLite connection. Production access requires a genuine supported database integration.
+In particular, Cloudflare D1 is not automatically interchangeable with a conventional SQLAlchemy SQLite connection. A genuine supported integration is required before D1 can be described as operational.
 
-A public deployment should only be described as complete once:
+A deployment should only be marked complete after verifying:
 
-1. The frontend is publicly accessible over HTTPS.
+1. The public frontend loads over HTTPS.
 2. The backend is deployed and responding.
-3. Persistent production storage works.
-4. Authentication works in the deployed environment.
-5. Frontend and backend communicate successfully.
-6. Core application workflows pass public end-to-end tests.
+3. Production storage persists data.
+4. Registration and authentication work.
+5. The frontend communicates with the production API.
+6. Core user journeys pass public end-to-end tests.
 
-No public production URL is claimed in this README until these conditions are verified.
+**No public production URL is claimed here until those conditions have been verified.**
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
-The roadmap below distinguishes the existing product experience from future work.
+Mindsy's future development is guided by the same principles as its current experience.
 
 | Area | Direction |
 |---|---|
-| Emotional reflection | Continue improving the check-in experience |
-| Living Garden | Extend visual variety while preserving stable plant identity |
-| Insights | Improve the clarity of descriptive emotional summaries |
-| Accessibility | Refine keyboard access and reduced-motion behaviour |
-| Privacy | Strengthen data ownership and transparent processing choices |
-| Authentication | Improve account recovery and verification flows |
-| Deployment | Complete and verify persistent production hosting |
-| Documentation | Maintain accurate setup, architecture and API references |
+| Emotional reflection | Continue refining the check-in experience. |
+| Living Garden | Expand visual variety while preserving stable plant identity. |
+| Insights | Improve clarity of descriptive summaries. |
+| Accessibility | Continue improving keyboard access and reduced-motion behaviour. |
+| Privacy | Strengthen data ownership and transparent processing choices. |
+| Authentication | Improve account and session-management experiences. |
+| Deployment | Complete and verify persistent production hosting. |
+| Documentation | Keep technical setup and architecture references aligned with the codebase. |
 
-The roadmap is directional, not a promise that every item has been implemented.
+The roadmap describes development directions, not guarantees that these improvements are already implemented.
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 Contributions that improve accessibility, reliability, privacy, security, and the reflection experience are welcome.
 
 1. Fork the repository.
 2. Create a focused feature branch.
-3. Make a small, clearly scoped change.
+3. Make a clearly scoped change.
 4. Run relevant tests and checks.
-5. Submit a pull request with an explanation and verification notes.
+5. Submit a pull request with a description and verification notes.
 
-Mindsy's product philosophy matters in contributions: avoid diagnostic claims, pressure-based streak mechanics, unnecessary personal-data collection, or design changes that compromise the calm and accessible experience.
+Please keep Mindsy's product philosophy in mind when contributing:
+
+- Avoid diagnostic claims.
+- Avoid pressure-based streak mechanics.
+- Avoid unnecessary personal-data collection.
+- Preserve the calm, accessible experience.
+- Prefer transparent behaviour over unexplained automation.
 
 ---
 
-## Licence
+## 📄 Licence
 
 See the repository's [`LICENSE`](LICENSE) file for the applicable licence and permissions.
 
 ---
 
 <p align="center">
-  **Mindsy**<br/>
-  *A softer place to check in.*
-  <br/><br/>
-  Feel what you feel. There's room for it here. 🌷
+  <strong>Mindsy 🌷</strong><br />
+  <em>A softer place to check in.</em><br /><br />
+  Feel what you feel. There's room for it here.
 </p>
