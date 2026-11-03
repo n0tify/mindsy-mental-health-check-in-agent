@@ -1,7 +1,9 @@
 # Deploying Mindsy
 
-Mindsy runs as a Next.js frontend and a Python API. This repository does not include provider
-deployment manifests, and no external deployment or live Azure request has been verified.
+Mindsy runs as a Next.js frontend and a Python API. The repository includes a Render Blueprint for
+the API. Vercel's built-in Next.js support is configured through the Vercel project settings; no
+custom Vercel configuration file is required. No external deployment or live Azure request is
+verified by this repository configuration.
 
 ## Local development
 
@@ -108,24 +110,64 @@ nullable VADER score columns on existing `mood_entries` tables. This targeted mi
 existing rows; it is not a general Alembic migration pipeline. Back up production data and verify
 the migration against a staging database before deployment.
 
-## Hosting outline
+## Render backend
 
-- **Frontend:** Vercel is a natural Next.js host. Use `frontend` as the root directory and the
-  project's npm build command. Other providers need a compatible Next.js runtime/adapter.
-- **Backend:** deploy `backend` as a Python ASGI service using
-  `uvicorn app.main:app --host 0.0.0.0 --port $PORT` (adapt environment syntax for the host).
-- **Database:** configure PostgreSQL and the corresponding SQLAlchemy URL on the API service.
-- **Routing:** either configure the frontend to call the API origin directly and allow that origin
-  in CORS, or leave `NEXT_PUBLIC_API_URL` empty and point `API_PROXY_TARGET` at the API from the
-  Next.js server.
+The root `render.yaml` Blueprint defines a Python web service rooted at `backend`, installs
+`backend/requirements.txt`, starts Uvicorn on Render's `$PORT`, pins Python 3.11.11, and uses
+`/api/health` as its service health-check path. It generates `JWT_SECRET` in Render and prompts for
+`DATABASE_URL` and `CORS_ORIGINS` rather than storing either in Git. Keep `AZURE_OPENAI_ENABLED`
+false; no Azure credentials are needed.
+
+When creating or syncing the Blueprint, provide these values through Render's secure environment
+settings:
+
+- `DATABASE_URL`: the Neon connection URL using SQLAlchemy's psycopg 3 dialect, for example
+  `postgresql+psycopg://<user>:<password>@<host>:5432/<database>?sslmode=require`. Start from Neon
+  connection details, keep the host/database/SSL parameters, and use the `postgresql+psycopg://`
+  scheme because the backend installs `psycopg[binary]`, not psycopg2.
+- `CORS_ORIGINS`: the exact production Vercel origin, such as `https://<your-project>.vercel.app`;
+  add a custom domain only if one is assigned. Do not include paths or a trailing slash.
+
+The health endpoint confirms the API process responds; it does not check database connectivity.
+Verify database connectivity with a non-destructive authenticated signup/login and data persistence
+test after both services are configured. The backend applies its existing additive nullable-column
+migration on startup; back up the Neon database and verify the migration in staging before
+production use.
+
+## Vercel frontend
+
+Import the same GitHub repository as a Vercel project, set **Root Directory** to `frontend`, and
+use the existing Next.js framework detection and `npm run build` command. The project already
+rewrites `/api/*` server-side using `API_PROXY_TARGET` in `frontend/next.config.ts`.
+
+In Vercel's Production environment variables, set `API_PROXY_TARGET` to the Render API origin
+(for example `https://<your-render-service>.onrender.com`) and leave `NEXT_PUBLIC_API_URL` unset.
+The browser then makes same-origin `/api/*` requests through Next.js, which forwards them to Render;
+the browser does not need the backend hostname and direct cross-origin CORS is avoided. If using a
+direct browser-to-API URL instead, set `NEXT_PUBLIC_API_URL` to the Render origin and allow the
+exact Vercel origin in Render's `CORS_ORIGINS`. Never put backend secrets in `NEXT_PUBLIC_*`
+variables.
+
+Vercel environment changes require a new deployment to take effect. Preview deployments need their
+own intended API target and must not accidentally use production user data.
+
+## Deploy sequence
+
+1. Create a Neon PostgreSQL database and keep its connection details private.
+2. Create/sync the Render Blueprint from `render.yaml`; select an instance plan in Render and supply
+   the Neon URL and eventual Vercel production origin in the secure prompts/settings.
+3. Wait for the Render service to deploy and check its `/api/health` endpoint.
+4. Import the GitHub repository into Vercel with `frontend` as its root, set
+   `API_PROXY_TARGET` to the Render origin, and deploy.
+5. Test the hosted frontend, signup/login, authenticated check-in persistence after refresh, journal,
+   garden, Companion, crisis routing, and account data isolation. Check mobile and desktop layouts.
+6. Confirm no secrets are present in browser bundles or GitHub. Keep Azure disabled; the current UI
+   does not disclose external AI processing or send the explicit consent field.
 
 Deploy the Next.js frontend and FastAPI backend described above. The archived Streamlit prototype
 in `archive/streamlit-prototype/` is not a supported production entrypoint. It has a separate
 legacy Azure path that can send journal text externally without the current backend's
 disclosure/opt-in safeguards and can surface provider errors. Do not deploy it for real user data.
-
-No Vercel, Render, Railway, or other provider configuration is committed here. Verify each
-provider's current Next.js/Python runtime behavior before deployment.
 
 ## Regression and post-deploy checklist
 
