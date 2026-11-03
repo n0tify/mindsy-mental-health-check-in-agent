@@ -5,6 +5,10 @@ the API. Vercel's built-in Next.js support is configured through the Vercel proj
 custom Vercel configuration file is required. No external deployment or live Azure request is
 verified by this repository configuration.
 
+The Render Blueprint has automatic deployments disabled so syncing it does not itself publish new
+commits. This repository does not contain Vercel account settings; do not connect or deploy a Vercel
+project until the release diff is reviewed and deployment is explicitly approved.
+
 ## Local development
 
 Use Python 3.11 or newer and Node.js 20.19 or newer.
@@ -108,7 +112,9 @@ credential. `API_PROXY_TARGET` is server-side configuration.
 The backend creates tables at startup and applies an idempotent, additive migration for four
 nullable VADER score columns on existing `mood_entries` tables. This targeted migration preserves
 existing rows; it is not a general Alembic migration pipeline. Back up production data and verify
-the migration against a staging database before deployment.
+the migration against a staging database before deployment. Production and staging startup reject
+SQLite and PostgreSQL URLs that do not explicitly select the installed `psycopg` 3 driver; use
+`postgresql+psycopg://...`. Development and test environments can continue to use SQLite.
 
 ## Render backend
 
@@ -116,7 +122,8 @@ The root `render.yaml` Blueprint defines a Python web service rooted at `backend
 `backend/requirements.txt`, starts Uvicorn on Render's `$PORT`, pins Python 3.11.11, and uses
 `/api/health` as its service health-check path. It generates `JWT_SECRET` in Render and prompts for
 `DATABASE_URL` and `CORS_ORIGINS` rather than storing either in Git. Keep `AZURE_OPENAI_ENABLED`
-false; no Azure credentials are needed.
+false; no Azure credentials are needed. `autoDeploy: false` requires an operator to explicitly
+deploy a reviewed revision.
 
 When creating or syncing the Blueprint, provide these values through Render's secure environment
 settings:
@@ -150,6 +157,9 @@ variables.
 
 Vercel environment changes require a new deployment to take effect. Preview deployments need their
 own intended API target and must not accidentally use production user data.
+Production builds fail if neither `API_PROXY_TARGET` nor `NEXT_PUBLIC_API_URL` is configured, rather
+than silently creating a localhost proxy. The CI build sets a reserved `.invalid` proxy target only
+to validate compilation; it is not a usable service URL.
 
 ## Deploy sequence
 
@@ -206,6 +216,9 @@ After deployment, verify:
 The automated integration does not make Mindsy a clinical product or prove regulatory compliance.
 Before real users, review account deletion, email verification/password recovery, rate limiting,
 security headers, audit/operational monitoring, database migrations, data-retention policies, and
-crisis resources. See [TECH_STACK_AUDIT.md](TECH_STACK_AUDIT.md) for the latest dependency audit.
+crisis resources. Provision and test a separate staging PostgreSQL database, backups, restore, and
+provider settings before staging or public deployment. The API health endpoint is a liveness check,
+not ongoing database readiness monitoring. See [TECH_STACK_AUDIT.md](TECH_STACK_AUDIT.md) for the
+latest dependency audit.
 The current localStorage token approach is convenient for a demo but is not an httpOnly-cookie
 design.

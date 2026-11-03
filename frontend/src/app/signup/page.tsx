@@ -55,8 +55,8 @@ export default function SignupPage() {
         <p className="m-eyebrow">a place that remembers</p>
         <h1 className="mt-4 text-4xl font-semibold leading-tight text-ink">Create your account</h1>
         <p className="mt-2 text-muted">
-          An account keeps your garden, journal and gratitude notes safe — and moves anything you
-          made as a guest into it.
+          An account keeps your garden, journal and gratitude notes. If you have guest records in
+          this browser profile, you can choose whether to transfer them after signing in.
         </p>
 
         {user ? (

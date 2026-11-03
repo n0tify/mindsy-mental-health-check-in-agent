@@ -33,7 +33,11 @@ type MindsyContextValue = {
   journal: JournalEntry[];
   gratitude: GratitudeNote[];
   notice: string | null;
+  guestMigrationCounts: { entries: number; journal: number; gratitude: number } | null;
+  guestMigrationBusy: boolean;
   dismissNotice: () => void;
+  acceptGuestMigration: () => Promise<void>;
+  declineGuestMigration: () => void;
   signup: (input: { name: string; email: string; password: string }) => Promise<void>;
   login: (input: { email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
@@ -78,6 +82,14 @@ export function MindsyProvider({ children }: { children: React.ReactNode }) {
   const [accountPlants, setAccountPlants] = useState<GardenPlant[]>([]);
   const [gardenFromApi, setGardenFromApi] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [guestMigrationCounts, setGuestMigrationCounts] = useState<{
+    entries: number;
+    journal: number;
+    gratitude: number;
+  } | null>(null);
+  const [guestMigrationToken, setGuestMigrationToken] = useState<string | null>(null);
+  const [guestMigrationBusy, setGuestMigrationBusy] = useState(false);
+  const [guestMigrationError, setGuestMigrationError] = useState<string | null>(null);
 
   const dismissNotice = useCallback(() => setNotice(null), []);
 
@@ -121,43 +133,112 @@ export function MindsyProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  /** Move anything created as a guest into the freshly authenticated account. */
-  const migrateGuestData = useCallback(async (activeToken: string) => {
+  const requestGuestMigrationConsent = useCallback((activeToken: string) => {
+    const counts = guestStore.counts();
+    if (counts.entries + counts.journal + counts.gratitude === 0) return;
+    setGuestMigrationToken(activeToken);
+    setGuestMigrationCounts(counts);
+    setGuestMigrationError(null);
+  }, []);
+
+  const declineGuestMigration = useCallback(() => {
+    setGuestMigrationToken(null);
+    setGuestMigrationCounts(null);
+    setGuestMigrationError(null);
+    setNotice("Your guest records remain in this browser profile.");
+  }, []);
+
+  const acceptGuestMigration = useCallback(async () => {
+    if (!guestMigrationToken) return;
+
     const guestEntries = guestStore.readEntries();
     const guestJournal = guestStore.readJournal();
     const guestNotes = guestStore.readGratitude();
-
-    if (guestEntries.length + guestJournal.length + guestNotes.length === 0) return;
-
+    const snapshot = JSON.stringify([guestEntries, guestJournal, guestNotes]);
+    setGuestMigrationBusy(true);
+    setGuestMigrationError(null);
     try {
-      for (const entry of guestEntries) {
-        await api.createEntry(activeToken, {
-          primary_mood: entry.primary_mood,
-          emotions: entry.emotions,
-          energy: entry.energy,
-          note: entry.note,
-          tags: entry.tags,
-          created_at: entry.created_at,
+      const entriesPayload = guestEntries.map((entry) => ({
+        id: entry.id,
+        created_at: entry.created_at,
+        primary_mood: entry.primary_mood,
+        emotions: entry.emotions,
+        energy: entry.energy,
+        note: entry.note,
+        tags: entry.tags,
+      }));
+      const journalPayload = guestJournal.map((entry) => ({
+        id: entry.id,
+        title: entry.title,
+        body: entry.body,
+        mood: entry.mood,
+        created_at: entry.created_at,
+        updated_at: entry.updated_at,
+      }));
+      const gratitudePayload = guestNotes.map((note) => ({
+        id: note.id,
+        text: note.text,
+        created_at: note.created_at,
+      }));
+      for (let index = 0; index < entriesPayload.length; index += 100) {
+        await api.migrateGuestData(guestMigrationToken, {
+          entries: entriesPayload.slice(index, index + 100),
+          journal: [],
+          gratitude: [],
         });
       }
-      for (const entry of guestJournal) {
-        await api.createJournal(activeToken, {
-          title: entry.title,
-          body: entry.body,
-          mood: entry.mood,
+      for (let index = 0; index < journalPayload.length; index += 100) {
+        await api.migrateGuestData(guestMigrationToken, {
+          entries: [],
+          journal: journalPayload.slice(index, index + 100),
+          gratitude: [],
         });
       }
-      for (const note of guestNotes) {
-        await api.createGratitude(activeToken, note.text);
+      for (let index = 0; index < gratitudePayload.length; index += 100) {
+        await api.migrateGuestData(guestMigrationToken, {
+          entries: [],
+          journal: [],
+          gratitude: gratitudePayload.slice(index, index + 100),
+        });
       }
+
+      const [savedEntries, savedJournal, savedGratitude] = await Promise.all([
+        api.listEntries(guestMigrationToken),
+        api.listJournal(guestMigrationToken),
+        api.listGratitude(guestMigrationToken),
+      ]);
+      const allSaved =
+        guestEntries.every((entry) => savedEntries.some((saved) => saved.id === entry.id)) &&
+        guestJournal.every((entry) => savedJournal.some((saved) => saved.id === entry.id)) &&
+        guestNotes.every((note) => savedGratitude.some((saved) => saved.id === note.id));
+      const guestDataUnchanged =
+        snapshot ===
+        JSON.stringify([
+          guestStore.readEntries(),
+          guestStore.readJournal(),
+          guestStore.readGratitude(),
+        ]);
+      if (!allSaved || !guestDataUnchanged) {
+        throw new Error(
+          "Transfer could not be verified. Your guest records have been kept in this browser.",
+        );
+      }
+
+      await loadAccount(guestMigrationToken);
       guestStore.clear();
-      setNotice("Your guest check-ins and notes moved into your account.");
-    } catch {
-      setNotice(
-        "Some guest entries could not be moved, but they are still stored safely in this browser.",
+      setGuestMigrationToken(null);
+      setGuestMigrationCounts(null);
+      setNotice("Your guest records were verified and moved into your account.");
+    } catch (error) {
+      setGuestMigrationError(
+        error instanceof Error
+          ? error.message
+          : "Transfer could not be verified. Your guest records are still in this browser.",
       );
+    } finally {
+      setGuestMigrationBusy(false);
     }
-  }, []);
+  }, [guestMigrationToken, loadAccount]);
 
   useEffect(() => {
     let cancelled = false;
@@ -175,9 +256,9 @@ export function MindsyProvider({ children }: { children: React.ReactNode }) {
         if (cancelled) return;
         setToken(stored);
         setUser(profile);
-        await migrateGuestData(stored);
-        if (cancelled) return;
         await loadAccount(stored);
+        if (cancelled) return;
+        requestGuestMigrationConsent(stored);
       } catch {
         if (cancelled) return;
         // Expired or invalid token: fall back to guest mode instead of a
@@ -194,7 +275,7 @@ export function MindsyProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [loadAccount, loadGuest, migrateGuestData]);
+  }, [loadAccount, loadGuest, requestGuestMigrationConsent]);
 
   useEffect(() => {
     if (!notice) return;
@@ -210,14 +291,14 @@ export function MindsyProvider({ children }: { children: React.ReactNode }) {
         sessionStore.write(response.access_token);
         setToken(response.access_token);
         setUser(response.user);
-        await migrateGuestData(response.access_token);
         await loadAccount(response.access_token);
+        requestGuestMigrationConsent(response.access_token);
         setNotice(`Welcome, ${response.user.name.split(" ")[0]}. Your garden is ready.`);
       } finally {
         setBusy(false);
       }
     },
-    [loadAccount, migrateGuestData],
+    [loadAccount, requestGuestMigrationConsent],
   );
 
   const login = useCallback(
@@ -228,29 +309,36 @@ export function MindsyProvider({ children }: { children: React.ReactNode }) {
         sessionStore.write(response.access_token);
         setToken(response.access_token);
         setUser(response.user);
-        await migrateGuestData(response.access_token);
         await loadAccount(response.access_token);
+        requestGuestMigrationConsent(response.access_token);
         setNotice(`Welcome back, ${response.user.name.split(" ")[0]}.`);
       } finally {
         setBusy(false);
       }
     },
-    [loadAccount, migrateGuestData],
+    [loadAccount, requestGuestMigrationConsent],
   );
 
   const logout = useCallback(async () => {
+    let revocationConfirmed = true;
     if (token) {
       try {
         await api.logout(token);
       } catch {
-        // The token may already be invalid; local sign-out is what matters.
+        revocationConfirmed = false;
       }
     }
     sessionStore.clear();
     setToken(null);
     setUser(null);
+    setGuestMigrationToken(null);
+    setGuestMigrationCounts(null);
     loadGuest();
-    setNotice("Signed out. You're browsing as a guest again.");
+    setNotice(
+      revocationConfirmed
+        ? "Signed out. You're browsing as a guest again."
+        : "Signed out on this device, but the server could not confirm token revocation. Reconnect and sign in again to secure this session.",
+    );
   }, [loadGuest, token]);
 
   const addEntry = useCallback(
@@ -441,7 +529,11 @@ export function MindsyProvider({ children }: { children: React.ReactNode }) {
     journal,
     gratitude,
     notice,
+    guestMigrationCounts,
+    guestMigrationBusy,
     dismissNotice,
+    acceptGuestMigration,
+    declineGuestMigration,
     signup,
     login,
     logout,
@@ -458,6 +550,62 @@ export function MindsyProvider({ children }: { children: React.ReactNode }) {
   return (
     <MindsyContext.Provider value={value}>
       {children}
+      {guestMigrationCounts ? (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/25 p-4 backdrop-blur-sm sm:items-center">
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="guest-migration-title"
+            aria-describedby="guest-migration-description"
+            className="w-full max-w-lg rounded-[2rem] border border-white/80 bg-gradient-to-b from-white via-mint-50 to-lavender-50 p-6 shadow-lift sm:p-8"
+          >
+            <p className="m-eyebrow">your choice</p>
+            <h2 id="guest-migration-title" className="mt-3 text-2xl font-semibold text-ink">
+              Transfer your guest records?
+            </h2>
+            <p id="guest-migration-description" className="mt-3 text-sm leading-relaxed text-muted">
+              These records are currently saved in this browser profile. Transfer them to{" "}
+              <strong>{user?.email}</strong> so they are stored with that account, or keep them in
+              this browser. Anyone using this same browser profile may be able to access its guest
+              records.
+            </p>
+            <ul className="mt-4 space-y-1 text-sm text-ink">
+              {guestMigrationCounts.entries > 0 ? (
+                <li>{guestMigrationCounts.entries} check-ins</li>
+              ) : null}
+              {guestMigrationCounts.journal > 0 ? (
+                <li>{guestMigrationCounts.journal} journal entries</li>
+              ) : null}
+              {guestMigrationCounts.gratitude > 0 ? (
+                <li>{guestMigrationCounts.gratitude} gratitude notes</li>
+              ) : null}
+            </ul>
+            {guestMigrationError ? (
+              <p role="alert" className="mt-4 rounded-2xl border border-blush-200 bg-blush-100/80 px-4 py-3 text-sm">
+                {guestMigrationError}
+              </p>
+            ) : null}
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <button
+                type="button"
+                disabled={guestMigrationBusy}
+                onClick={() => void acceptGuestMigration()}
+                className="m-btn-primary"
+              >
+                {guestMigrationBusy ? "Verifying transfer…" : "Transfer records"}
+              </button>
+              <button
+                type="button"
+                disabled={guestMigrationBusy}
+                onClick={declineGuestMigration}
+                className="m-btn-secondary"
+              >
+                Keep in this browser
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
       {notice ? (
         <div
           role="status"

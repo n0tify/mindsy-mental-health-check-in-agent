@@ -4,8 +4,8 @@ import type { GratitudeNote, JournalEntry, MoodEntry } from "./types";
  * Guest mode storage.
  *
  * Guests get the full experience without an account: check-ins, journal entries
- * and gratitude notes live in localStorage and are migrated into the account on
- * first sign-in/sign-up.
+ * and gratitude notes live in this browser profile's localStorage. They are
+ * transferred to an account only after the user explicitly agrees.
  */
 
 const KEYS = {
@@ -63,6 +63,12 @@ export const guestStore = {
     const gratitude = readJson<GratitudeNote[]>(KEYS.gratitude, []);
     return entries.length + journal.length + gratitude.length > 0;
   },
+
+  counts: () => ({
+    entries: readJson<MoodEntry[]>(KEYS.entries, []).length,
+    journal: readJson<JournalEntry[]>(KEYS.journal, []).length,
+    gratitude: readJson<GratitudeNote[]>(KEYS.gratitude, []).length,
+  }),
 
   clear: () => {
     if (typeof window === "undefined") return;

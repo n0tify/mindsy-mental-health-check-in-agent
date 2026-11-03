@@ -3,12 +3,18 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from fastapi.security import HTTPAuthorizationCredentials
 
 from ..database import get_db
+from ..deps import bearer_scheme, get_current_user
 from ..models import User
 from ..schemas.auth import TokenResponse, UserCreate, UserLogin, UserRead
-from ..services.security import create_access_token, hash_password, verify_password
-from ..deps import get_current_user
+from ..services.security import (
+    create_access_token,
+    hash_password,
+    revoke_access_token,
+    verify_password,
+)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -60,10 +66,11 @@ def read_me(user: User = Depends(get_current_user)) -> UserRead:
 
 
 @router.post("/logout", status_code=status.HTTP_200_OK)
-def logout(_: User = Depends(get_current_user)) -> dict[str, str]:
-    """Tokens are stateless; the client discards its copy.
-
-    Exposed so signing out is an explicit, observable action. Swap in a token
-    deny-list or short lived tokens plus refresh cookies for a hardened setup.
-    """
+def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    _: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    """Revoke only the authenticated access token, then let the client discard it."""
+    revoke_access_token(db, credentials.credentials)
     return {"detail": "Signed out."}

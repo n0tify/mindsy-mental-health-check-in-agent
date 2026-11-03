@@ -133,6 +133,18 @@ type ApiPlant = {
   z_index: number;
 };
 
+type GuestMigrationPayload = {
+  entries: Array<Omit<MoodEntry, "source">>;
+  journal: Array<Omit<JournalEntry, "source">>;
+  gratitude: Array<Omit<GratitudeNote, "source">>;
+};
+
+type GuestMigrationResult = {
+  entries: number;
+  journal: number;
+  gratitude: number;
+};
+
 /* -------------------------------------------------------------- adapters */
 
 export function toMoodEntry(entry: ApiMoodEntry): MoodEntry {
@@ -182,6 +194,13 @@ export const api = {
 
   logout: (token: string) =>
     request<{ detail: string }>("/api/auth/logout", { method: "POST", token }),
+
+  migrateGuestData: (token: string, payload: GuestMigrationPayload) =>
+    request<GuestMigrationResult>("/api/guest-migrations", {
+      method: "POST",
+      token,
+      body: payload,
+    }),
 
   listEntries: async (token: string) => {
     const entries = await request<ApiMoodEntry[]>("/api/entries", { token });

@@ -52,8 +52,10 @@ service boundaries and data flow.
   consented to per API request. The current UI remains opted out.
 
 The current frontend lint and TypeScript checks and backend tests are run locally; see
-[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) for the latest results. No live Azure request
-or hosted deployment is implied by the presence of integration code.
+[docs/PRODUCTION_READINESS_BASELINE.md](docs/PRODUCTION_READINESS_BASELINE.md) for the current
+deployment status and [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) for the earlier
+integration-specific verification. No live Azure request or hosted deployment is implied by the
+presence of integration code.
 
 ## Local development
 
@@ -212,9 +214,11 @@ app. See [archive/streamlit-prototype/README.md](archive/streamlit-prototype/REA
 
 ## Deployment and limitations
 
-Deployment guidance is in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). No external deployment or live
-Azure inference has been verified. Production use still requires a persistent database, production
-secrets, a restricted CORS allow-list, appropriate hosting, and review of privacy and safety needs.
+Deployment guidance is in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), with current blockers in
+[docs/PRODUCTION_READINESS_BASELINE.md](docs/PRODUCTION_READINESS_BASELINE.md). No external
+deployment or live Azure inference has been verified. Production use still requires a persistent
+database, production secrets, a restricted CORS allow-list, appropriate hosting, and review of
+privacy and safety needs.
 The Companion is not a clinical or emergency service; automated crisis phrase matching cannot
 replace human assessment.
 

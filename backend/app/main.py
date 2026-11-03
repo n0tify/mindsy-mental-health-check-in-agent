@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .database import init_db
-from .routes import auth, companion, entries, garden, gratitude, journal
+from .routes import auth, companion, entries, garden, gratitude, guest_migrations, journal
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mindsy")
@@ -57,6 +57,7 @@ for router in (
     garden.router,
     journal.router,
     gratitude.router,
+    guest_migrations.router,
     companion.router,
 ):
     app.include_router(router)

@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
+
+import jwt
 from sqlalchemy import select
 
 from app.database import SessionLocal
 from app.models import User
+from app.config import settings
 
 
 def test_signup_returns_token_and_public_profile(client, signup_payload):
@@ -110,3 +114,41 @@ def test_logout_is_explicit(client, user):
     response = client.post("/api/auth/logout", headers=user["headers"])
     assert response.status_code == 200
     assert response.json()["detail"] == "Signed out."
+    assert client.get("/api/auth/me", headers=user["headers"]).status_code == 401
+
+
+def test_logout_revokes_only_the_current_access_token(client, signup_payload):
+    payload = signup_payload()
+    client.post("/api/auth/signup", json=payload)
+    first_login = client.post(
+        "/api/auth/login",
+        json={"email": payload["email"], "password": payload["password"]},
+    ).json()["access_token"]
+    second_login = client.post(
+        "/api/auth/login",
+        json={"email": payload["email"], "password": payload["password"]},
+    ).json()["access_token"]
+    first_headers = {"Authorization": f"Bearer {first_login}"}
+    second_headers = {"Authorization": f"Bearer {second_login}"}
+
+    assert client.get("/api/auth/me", headers=first_headers).status_code == 200
+    assert client.get("/api/auth/me", headers=second_headers).status_code == 200
+    assert client.post("/api/auth/logout", headers=first_headers).status_code == 200
+    assert client.get("/api/auth/me", headers=first_headers).status_code == 401
+    assert client.get("/api/auth/me", headers=second_headers).status_code == 200
+
+
+def test_expired_access_token_is_rejected(client, user):
+    expired = jwt.encode(
+        {
+            "sub": user["user"]["id"],
+            "iat": datetime.now(timezone.utc) - timedelta(days=2),
+            "exp": datetime.now(timezone.utc) - timedelta(days=1),
+        },
+        settings.jwt_secret,
+        algorithm=settings.jwt_algorithm,
+    )
+    response = client.get(
+        "/api/auth/me", headers={"Authorization": f"Bearer {expired}"}
+    )
+    assert response.status_code == 401
