@@ -73,7 +73,7 @@ The first selected feeling influences the flower's visual identity. Multiple fee
 ### 02. The Living Garden
 
 **Your feelings, growing.**
-
+<img width="924" height="431" alt="image" src="https://github.com/user-attachments/assets/b2060f97-0431-432a-a53b-0af06f8763d0" />
 Every check-in becomes a plant. Its visual identity comes from the emotional information recorded, connecting a moment of reflection with a place in the garden.
 
 <p align="center">
