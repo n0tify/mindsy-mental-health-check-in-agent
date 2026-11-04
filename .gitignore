@@ -52,3 +52,16 @@ next-env.d.ts
 
 # Archives
 *.zip
+
+# Cloudflare / Wrangler (not used)
+.wrangler/
+wrangler.toml
+
+# Portable Node archive
+*.cab
+*.zip
+
+# Misc generated
+write_report.py
+cloudflare_backup/
+

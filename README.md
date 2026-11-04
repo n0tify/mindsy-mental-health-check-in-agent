@@ -214,13 +214,29 @@ app. See [archive/streamlit-prototype/README.md](archive/streamlit-prototype/REA
 
 ## Deployment and limitations
 
-Deployment guidance is in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md), with current blockers in
-[docs/PRODUCTION_READINESS_BASELINE.md](docs/PRODUCTION_READINESS_BASELINE.md). No external
-deployment or live Azure inference has been verified. Production use still requires a persistent
-database, production secrets, a restricted CORS allow-list, appropriate hosting, and review of
-privacy and safety needs.
-The Companion is not a clinical or emergency service; automated crisis phrase matching cannot
-replace human assessment.
+Mindsy deploys as two Vercel projects from this repository:
+
+- **Frontend:** Next.js App Router on Vercel (root directory: `frontend`)
+- **Backend:** Python/FastAPI on Vercel Functions (root directory: `backend`)
+- **Database:** Neon PostgreSQL (free tier)
+
+### Deployment order
+
+1. Create a Neon PostgreSQL project named `mindsy` (free tier).
+2. Copy the Neon connection string (`postgresql+psycopg://...?sslmode=require`).
+3. Deploy the backend on Vercel with root directory `backend`.
+4. Add backend environment variables: `APP_ENV=production`, `DATABASE_URL=<Neon connection string>`, `JWT_SECRET=<32+ random chars>`, `CORS_ORIGINS=<frontend Vercel HTTPS origin>`, `AZURE_OPENAI_ENABLED=false`.
+5. Deploy the frontend on Vercel with root directory `frontend`.
+6. Add frontend environment variables: `API_PROXY_TARGET=<backend Vercel HTTPS URL>`.
+7. Wait for both deployments, then open the frontend URL.
+
+No external deployment or live Azure inference has been verified by this repository configuration. Production use still requires review of privacy and safety needs.
+
+The Render Blueprint (`render.yaml`) remains in the repository for reference but is **not** part of the Vercel deployment path.
+
+Do not commit `.env`, `.env.local`, or any file containing real credentials. Only `.env.example` templates are tracked.
+
+The Companion is not a clinical or emergency service; automated crisis phrase matching cannot replace human assessment.
 
 ## Roadmap and contribution notes
 
