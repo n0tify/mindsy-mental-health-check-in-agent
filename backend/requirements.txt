@@ -1,6 +1,7 @@
 fastapi==0.162.0
 uvicorn==0.34.0
 SQLAlchemy==2.0.36
+vercel-runtime==1.1.2
 pydantic[email]==2.10.4
 PyJWT==2.15.0
 bcrypt==4.2.1
